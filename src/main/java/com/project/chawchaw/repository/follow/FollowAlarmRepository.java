@@ -28,6 +28,7 @@ public class FollowAlarmRepository {
 
       if(key!=null)
           redisTemplate.opsForValue().set(key,followAlarmDto);
+        redisTemplate.expire(key, 1, TimeUnit.DAYS);
     }
 
     public List<FollowAlarmDto> getFollowAlarmByUserId(Long toUserId, LocalDateTime lastLogOut){
