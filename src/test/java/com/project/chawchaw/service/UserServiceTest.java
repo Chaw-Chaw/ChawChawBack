@@ -281,7 +281,7 @@ class UserServiceTest {
 
     @Test
     public void jasyptTest()throws Exception{
-        String huk = "/pngs7V2Z7zRkPVPEwTPmVWb2cTBBa3HUP8OcDLuzxD4rDYKjb+r6wrlg+q0hKndBFaBB+YR3uVRCw54dskPPt55bfJ+6YEUCxRGJKr1JVBwdIHXvWoRAR1iJG4WHMOcI9DRembZDhg=";
+        String huk = "";
         String en=null;
 
 
@@ -295,13 +295,13 @@ class UserServiceTest {
         jasypt.setPassword(System.getProperty("jasypt.encryptor.password"));
         jasypt.setAlgorithm("PBEWithMD5AndDES");
 
-//        String encryptedText1 = jasypt.encrypt(huk);
-        System.out.println("======================de");
+        String encryptedText1 = jasypt.encrypt(huk);
+        System.out.println("======================jasypt");
 //        System.out.println(encryptedText1);
 //        System.out.println("dataurl");
-        String decryptedText1 = jasypt.decrypt(huk);
-        System.out.println(decryptedText1);
-//        assertThat(huk).isEqualTo(decryptedText1);
+        String decryptedText1 = jasypt.decrypt(encryptedText1);
+        System.out.println(encryptedText1);
+        assertThat(huk).isEqualTo(decryptedText1);
 
         String encryptedText2 = jasypt.encrypt(en);
         System.out.println("======================slack");

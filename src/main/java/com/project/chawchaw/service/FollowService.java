@@ -39,7 +39,7 @@ public class FollowService {
         User fromUser = userRepository.findById(fromUserId).orElseThrow(UserNotFoundException::new);
         User toUser = userRepository.findById(toUserId).orElseThrow(UserNotFoundException::new);
         followRepository.save(Follow.createFollow(fromUser, toUser));
-        FollowAlarmDto followAlarmDto = new FollowAlarmDto(FollowType.FOLLOW, fromUser.getName(), LocalDateTime.now());
+        FollowAlarmDto followAlarmDto = new FollowAlarmDto(FollowType.FOLLOW, fromUser.getName(), LocalDateTime.now().withNano(0));
         followAlarmRepository.createFollowAlarm(followAlarmDto,toUserId);
         messagingTemplate.convertAndSend("/queue/alarm/follow/" + toUserId,followAlarmDto );
     }
@@ -50,7 +50,7 @@ public class FollowService {
         User fromUser = userRepository.findById(fromUserId).orElseThrow(UserNotFoundException::new);
         Follow follow = followRepository.findByFollow(fromUserId, toUserId).orElseThrow(FollwNotFoundException::new);
         followRepository.delete(follow);
-        FollowAlarmDto followAlarmDto = new FollowAlarmDto(FollowType.UNFOLLOW, fromUser.getName(), LocalDateTime.now());
+        FollowAlarmDto followAlarmDto = new FollowAlarmDto(FollowType.UNFOLLOW, fromUser.getName(), LocalDateTime.now().withNano(0));
         followAlarmRepository.createFollowAlarm(followAlarmDto,toUserId);
         messagingTemplate.convertAndSend("/queue/alarm/follow/" + toUserId,followAlarmDto );
     }
