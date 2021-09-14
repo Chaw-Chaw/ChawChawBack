@@ -41,6 +41,7 @@ public class JwtAuthenticationFilter extends GenericFilterBean {
 
             Authentication auth = jwtTokenProvider.getAuthentication(token);
 
+
             //강제로 세션접근
 
             SecurityContextHolder.getContext().setAuthentication(auth);

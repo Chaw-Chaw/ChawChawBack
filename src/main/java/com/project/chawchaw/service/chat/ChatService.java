@@ -3,6 +3,7 @@ package com.project.chawchaw.service.chat;
 import com.project.chawchaw.dto.chat.ChatDto;
 import com.project.chawchaw.dto.chat.ChatMessageDto;
 
+import com.project.chawchaw.dto.chat.ChatRoomDto;
 import com.project.chawchaw.dto.chat.MessageType;
 import com.project.chawchaw.entity.ChatRoom;
 import com.project.chawchaw.entity.ChatRoomUser;
@@ -53,16 +54,20 @@ public class ChatService {
 
     //chatroom
     @Transactional
-    public List<ChatDto> createRoom(Long toUserId, Long fromUserId){
+    public ChatRoomDto createRoom(Long toUserId, Long fromUserId){
         User toUser=userRepository.findById(toUserId).orElseThrow(UserNotFoundException::new);
         User fromUser=userRepository.findById(fromUserId).orElseThrow(UserNotFoundException::new);
         ChatRoom chatRoom = chatRoomRepository.save(ChatRoom.createChatRoom(UUID.randomUUID().toString()));
         chatRoomUserRepository.save(ChatRoomUser.createChatRoomUser(chatRoom,toUser));
         chatRoomUserRepository.save(ChatRoomUser.createChatRoomUser(chatRoom,fromUser));
-        ChatMessageDto chatMessageDto = new ChatMessageDto(MessageType.ENTER,chatRoom.getId(), fromUserId, fromUser.getName(), fromUser.getName() + "님이 입장하셨습니다.",fromUser.getImageUrl(), LocalDateTime.now().withNano(0));
+        ChatMessageDto chatMessageDto = new ChatMessageDto(MessageType.ENTER,chatRoom.getId(), fromUserId, fromUser.getName(), fromUser.getName() + "님이 입장하셨습니다.",fromUser.getImageUrl(), LocalDateTime.now().withNano(0),false);
         chatMessageRepository.createChatMessage(chatMessageDto);
-        messagingTemplate.convertAndSend("/queue/chat/room/wait/" + toUserId,chatMessageDto );
-        messagingTemplate.convertAndSend("/queue/alarm/chat/" + toUserId, chatMessageDto);
+//        messagingTemplate.convertAndSend("/queue/chat/room/wait/" + toUserId,chatMessageDto );
+//        messagingTemplate.convertAndSend("/queue/alarm/chat/" + toUserId, chatMessageDto);
+          messagingTemplate.convertAndSend("/queue/chat/" + toUserId, chatMessageDto);
+
+          return new ChatRoomDto(chatRoom.getId(),chatRoom.getName());
+
 //        ChatRoom chatRoom=null;
 ////        Optional<ChatRoomUser> findChatRoomUser = chatRoomUserRepository.findByToUserIdAndFromUserId(toUserId, fromUserId);
 //        if(!chatRoomUserRepository.isChatRoom(toUserId,fromUserId)) {
@@ -75,7 +80,7 @@ public class ChatService {
 //           chatRoom=findChatRoomUser.get().getChatRoom();
 //
 //        }
-        return  getChat(fromUserId);
+
 //            if(chatRoomUser.getChatRoom().getId()==(chatRoom.getId()))continue;
 //            if(chatRoomUser.getFromUser().getId()==(fromUser.getId())){
 //                ChatDto chatDto=new ChatDto(chatRoomUser.getChatRoom().getId(),chatRoomUser.getToUser().getName(),chatRoomUser.getToUser().getImageUrl(),
@@ -91,14 +96,21 @@ public class ChatService {
 //            }
 //        }
 //        return chatDtos;
+
+    }
+    public ChatRoomDto isChatRoom(Long fromUserId, Long toUserId){
+        Optional<ChatRoomUser> chatRoomUser = chatRoomUserRepository.isChatRoom(fromUserId, toUserId);
+        if(chatRoomUser.isPresent()){
+            ChatRoom chatRoom = chatRoomUser.get().getChatRoom();
+            return new ChatRoomDto(chatRoom.getId(),chatRoom.getName());
+        }
+        else{
+            return null;
+        }
     }
     public List<ChatMessageDto> getChatMessageByRegDate(Long id){
         List<ChatMessageDto> chatMessageDto=new ArrayList<>();
-        User user = userRepository.findById(id).orElseThrow(UserNotFoundException::new);
-        if(user.getLastLogOut()==null){
-            return chatMessageDto;
-        }
-
+//        User user = userRepository.findById(id).orElseThrow(UserNotFoundException::new);
 
         List<ChatRoomUser> chatRoomUserByUserId = chatRoomUserRepository.findByChatRoomUserByUserId(id);
 
@@ -110,7 +122,7 @@ public class ChatService {
                 if(!chatRoomUser2.getUser().getId().equals(id)){
                     chatMessageRepository.findChatMessageByRoomId(chatRoomUser2.getChatRoom().getId()).stream().forEach(
                             c->{
-                                if(c.getRegDate().isAfter(user.getLastLogOut()))chatMessageDto.add(c);
+                                if(!c.getIsRead())chatMessageDto.add(c);
                             }
                     );
                 }
@@ -135,15 +147,19 @@ public class ChatService {
         for(int i=0;i<chatRoomUserByUserId.size();i++){
             ChatRoomUser chatRoomUser1 = chatRoomUserByUserId.get(i);
             List<ChatRoomUser> chatRoomUserByRoomId = chatRoomUserRepository.findByRoomId(chatRoomUser1.getChatRoom().getId());
+            ChatDto chatDto=new ChatDto();
+            ChatRoom chatRoom=chatRoomUser1.getChatRoom();
             for(int j=0;j<chatRoomUserByRoomId.size();j++){
-                ChatRoomUser chatRoomUser2 = chatRoomUserByRoomId.get(j);
-                if(!chatRoomUser2.getUser().getId().equals(id)){
-                    ChatDto chatDto=new ChatDto(chatRoomUser1.getChatRoom().getId(),chatRoomUser2.getUser().getId(),chatRoomUser2.getUser().getName(),chatRoomUser2.getUser().getImageUrl(),
-                            chatMessageRepository.findChatMessageByRoomId(chatRoomUser2.getChatRoom().getId()));
-
-                    chatDtos.add(chatDto);
+                User user = chatRoomUserByRoomId.get(j).getUser();
+                if(!user.getId().equals(id)) {
+                    chatDto.getParticipantNames().add(user.getName());
+                    chatDto.getParticipantIds().add(user.getId());
+                    chatDto.getParticipantImageUrls().add(user.getImageUrl());
                 }
+
             }
+            chatDto.setMessages(chatMessageRepository.findChatMessageByRoomId(chatRoom.getId()));
+            chatDtos.add(chatDto);
         }
 
         return chatDtos;
@@ -181,12 +197,21 @@ public class ChatService {
         chatMessageRepository.deleteByRoomId(roomId);
         ChatMessageDto message = new ChatMessageDto(
                 MessageType.EXIT, roomId, user.getId(), user.getName(),
-                user.getName() + "님이 퇴장하셨습니다.", user.getImageUrl(),LocalDateTime.now().withNano(0));
+                user.getName() + "님이 퇴장하셨습니다.", user.getImageUrl(),LocalDateTime.now().withNano(0),false);
 
-        messagingTemplate.convertAndSend("/queue/chat/room/" + roomId, message);
+        for(ChatRoomUser chatRoomUser:chatRoom.getChatRoomUsers()) {
+            Long chatUserId=chatRoomUser.getUser().getId();
+            if(!userId.equals(chatUserId)) {
+                messagingTemplate.convertAndSend("/queue/chat/" + chatUserId, message);
+
+            }
+        }
 
 
+    }
 
+    public void moveChatRoom(Long userId,Long roomId,String email)throws Exception{
+        chatMessageRepository.moveChatRoom(userId,roomId,email);
     }
 
 

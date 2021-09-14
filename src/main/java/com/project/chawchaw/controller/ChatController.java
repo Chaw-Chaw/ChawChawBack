@@ -1,12 +1,15 @@
 package com.project.chawchaw.controller;
 // import 생략...
 
+import com.project.chawchaw.config.auth.CustomUserDetails;
 import com.project.chawchaw.config.jwt.JwtTokenProvider;
 import com.project.chawchaw.config.response.DefaultResponseVo;
 import com.project.chawchaw.config.response.ResponseMessage;
 import com.project.chawchaw.dto.chat.ChatMessageDto;
+import com.project.chawchaw.dto.chat.ChatRoomDto;
 import com.project.chawchaw.dto.chat.ChatRoomRequestDto;
 import com.project.chawchaw.dto.chat.MessageType;
+import com.project.chawchaw.entity.ChatRoomUser;
 import com.project.chawchaw.repository.chat.ChatMessageRepository;
 import com.project.chawchaw.repository.chat.ChatRoomUserRepository;
 import com.project.chawchaw.service.S3Service;
@@ -22,6 +25,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import javax.validation.Valid;
 import java.time.LocalDateTime;
+import java.util.Optional;
 
 @RequiredArgsConstructor
 @Controller
@@ -31,7 +35,7 @@ public class ChatController {
     private final ChatMessageRepository chatRoomRepository;
     private final ChatService chatService;
     private final JwtTokenProvider jwtTokenProvider;
-    private final ChatRoomUserRepository chatRoomUserRepository;
+
     private final S3Service s3Service;
     private final ChatMessageRepository chatMessageRepository;
 
@@ -72,10 +76,12 @@ public class ChatController {
 
         Long fromUserId = Long.valueOf(jwtTokenProvider.getUserPk(token));
 //        chatRoomUserRepository.isChatRoom(false)
-        if(chatRoomUserRepository.isChatRoom(fromUserId,requestDto.getUserId()).isPresent()){
+
+        ChatRoomDto chatRoomDto = chatService.isChatRoom(fromUserId, requestDto.getUserId());
+        if(chatRoomDto!=null){
 
             return new ResponseEntity(DefaultResponseVo.res(ResponseMessage.CHATROOM_FIND_SUCCESS,
-                    true,chatService.getChat(fromUserId)), HttpStatus.OK);
+                    true,chatRoomDto), HttpStatus.OK);
         }
         else{
 
@@ -108,7 +114,7 @@ public class ChatController {
 
 
         return new ResponseEntity(DefaultResponseVo.res(ResponseMessage.CHATROOM_DELETE_SUCCESS,
-                true,chatService.getChat(userId)), HttpStatus.OK);
+                true), HttpStatus.OK);
     }
 
     @PostMapping("/chat/image")
@@ -126,5 +132,21 @@ public class ChatController {
                     false), HttpStatus.OK);
         }
     }
+    @PostMapping("/chat/room/enter")
+    @ResponseBody
+    public ResponseEntity changeChatRoom(@RequestBody ChatRoomDto chatRoomDto,@AuthenticationPrincipal CustomUserDetails customUserDetails) {
+
+
+        try {
+            chatService.moveChatRoom(customUserDetails.getId(), chatRoomDto.getRoomId(), customUserDetails.getUsername());
+            return new ResponseEntity(DefaultResponseVo.res(ResponseMessage.MOVE_CHATROOM_SUCCESS,
+                    true), HttpStatus.OK);
+        }catch (Exception e){
+
+            return new ResponseEntity(DefaultResponseVo.res(ResponseMessage.MOVE_CHATROOM_FAIL,
+                    false), HttpStatus.OK);
+        }
+    }
+
 
 }

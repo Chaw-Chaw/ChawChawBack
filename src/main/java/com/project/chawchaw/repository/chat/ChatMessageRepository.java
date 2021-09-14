@@ -92,6 +92,29 @@ public class ChatMessageRepository {
         return fileNameList;
     }
 
+    public void moveChatRoom(Long userId,Long roomId,String email)throws Exception{
+        if(redisTemplate.opsForValue().get("session::"+"_"+email)==null){
+            throw new Exception();
+        }
+        Set<String> keys = redisTemplate.keys(roomId.toString() + "_" + "*");
+        for(String key:keys){
+            ChatMessageDto chatMessageDto = objectMapper.convertValue(redisTemplate.opsForValue().get(key), ChatMessageDto.class);
+            if(chatMessageDto.getIsRead().equals(false)&&!chatMessageDto.getSenderId().equals(userId)){
+                chatMessageDto.setIsRead(true);
+                redisTemplate.opsForValue().set(key,chatMessageDto);
+            }
+
+        }
+
+    }
+
+    public void createRoomSession(String email){
+        if(redisTemplate.opsForValue().get("session::"+"_"+email)==null)
+        redisTemplate.opsForValue().set("session::"+"_"+email,-1L);
+    }
+    public void deleteRoomSession(String email){
+        redisTemplate.delete("session::"+"_"+email);
+    }
 
 
 

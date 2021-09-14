@@ -60,10 +60,6 @@ public class UserService {
 
        return userDto;
 
-
-
-
-
     }
     public List<UsersDto> users(UserSearch userSearch, Long userId){
         User user = userRepository.findById(userId).orElseThrow(UserNotFoundException::new);

@@ -31,4 +31,6 @@ public class ChatMessageDto implements Serializable {
 
     private String imageUrl;
     private LocalDateTime regDate;
+
+    private Boolean isRead;
 }

@@ -42,6 +42,8 @@ public class ResponseMessage {
     public static final String LOGOUT_FAIL="logout에 실패했습니다.";
     public static final String LOGOUT_SUCCESS="logout에 성공했습니다.";
     public static final String ALARM_FIND_SUCCESS="알림 조회에 성공했습니다.";
+    public static final String MOVE_CHATROOM_SUCCESS="방 이동에 성공했습니다";
+    public static final String MOVE_CHATROOM_FAIL="방 이동에 실패했습니다";
 
 
 

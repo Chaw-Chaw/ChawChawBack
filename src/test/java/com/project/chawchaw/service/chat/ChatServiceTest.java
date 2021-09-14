@@ -2,6 +2,7 @@ package com.project.chawchaw.service.chat;
 
 import com.project.chawchaw.dto.chat.ChatDto;
 import com.project.chawchaw.dto.chat.ChatMessageDto;
+import com.project.chawchaw.dto.chat.ChatRoomDto;
 import com.project.chawchaw.dto.chat.MessageType;
 import com.project.chawchaw.dto.user.UserUpdateDto;
 import com.project.chawchaw.entity.Country;
@@ -104,17 +105,17 @@ class ChatServiceTest {
         User user2 = userRepository.findByEmail("22").orElseThrow(UserNotFoundException::new);
 
        //when
-        List<ChatDto> room = chatService.createRoom(user2.getId(), user1.getId());
+        ChatRoomDto room = chatService.createRoom(user2.getId(), user1.getId());
         em.flush(); em.clear();
-        List<ChatMessageDto> chatMessageByRoomId = chatMessageRepository.findChatMessageByRoomId(room.get(0).getRoomId());
+        List<ChatMessageDto> chatMessageByRoomId = chatMessageRepository.findChatMessageByRoomId(room.getRoomId());
 
 
         //then
         assertThat(chatMessageByRoomId.get(0).getMessageType()).isEqualTo(MessageType.ENTER);
         assertThat(chatMessageByRoomId.get(0).getSenderId()).isEqualTo(user1.getId());
-        assertThat(chatRoomRepository.findById(room.get(0).getRoomId()).isPresent()).isTrue();
-        assertThat(chatRoomUserRepository.findByChatRoomUserByUserId(user1.getId()).get(0).getChatRoom().getId()).isEqualTo(room.get(0).getRoomId());
-        assertThat(chatRoomUserRepository.findByChatRoomUserByUserId(user2.getId()).get(0).getChatRoom().getId()).isEqualTo(room.get(0).getRoomId());
+        assertThat(chatRoomRepository.findById(room.getRoomId()).isPresent()).isTrue();
+        assertThat(chatRoomUserRepository.findByChatRoomUserByUserId(user1.getId()).get(0).getChatRoom().getId()).isEqualTo(room.getRoomId());
+        assertThat(chatRoomUserRepository.findByChatRoomUserByUserId(user2.getId()).get(0).getChatRoom().getId()).isEqualTo(room.getRoomId());
     }
 
 

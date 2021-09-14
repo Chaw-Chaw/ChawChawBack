@@ -41,7 +41,7 @@ public class FollowService {
         followRepository.save(Follow.createFollow(fromUser, toUser));
         FollowAlarmDto followAlarmDto = new FollowAlarmDto(FollowType.FOLLOW, fromUser.getName(), LocalDateTime.now().withNano(0));
         followAlarmRepository.createFollowAlarm(followAlarmDto,toUserId);
-        messagingTemplate.convertAndSend("/queue/alarm/follow/" + toUserId,followAlarmDto );
+        messagingTemplate.convertAndSend("/queue/follow/" + toUserId,followAlarmDto );
     }
 
     public void unFollow(Long toUserId, Long fromUserId) {
@@ -52,7 +52,7 @@ public class FollowService {
         followRepository.delete(follow);
         FollowAlarmDto followAlarmDto = new FollowAlarmDto(FollowType.UNFOLLOW, fromUser.getName(), LocalDateTime.now().withNano(0));
         followAlarmRepository.createFollowAlarm(followAlarmDto,toUserId);
-        messagingTemplate.convertAndSend("/queue/alarm/follow/" + toUserId,followAlarmDto );
+        messagingTemplate.convertAndSend("/queue/follow/" + toUserId,followAlarmDto );
     }
     public List<FollowAlarmDto> getFollowAlarm(Long toUserId){
         User toUser = userRepository.findById(toUserId).orElseThrow(UserNotFoundException::new);

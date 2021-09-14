@@ -40,15 +40,18 @@ public class ChatSubService implements MessageListener {
 
             ChatMessageDto roomMessage = objectMapper.readValue(publishMessage, ChatMessageDto.class);
 
-            System.out.println(roomMessage.getRoomId());
-            List<ChatRoomUser> chatRoomUser = chatRoomUserRepository.findByRoomId(roomMessage.getRoomId());
-            // Websocket 구독자에게 채팅 메시지 Send
-            messagingTemplate.convertAndSend("/queue/chat/room/" +roomMessage.getRoomId(),roomMessage);
 
+            List<ChatRoomUser> chatRoomUserList = chatRoomUserRepository.findByRoomId(roomMessage.getRoomId());
+            // Websocket 구독자에게 채팅 메시지 Send
+            for(ChatRoomUser chatRoomUser:chatRoomUserList) {
+                Long userId = chatRoomUser.getUser().getId();
+                if (!roomMessage.getSenderId().equals(userId)) {
+                    messagingTemplate.convertAndSend("/queue/chat/" + userId, roomMessage);
+                }
 //            for(ChatRoomUser c:chatRoomUser) {
 //                messagingTemplate.convertAndSend("/queue/chat/room/wait/" + c.getUser().getId(), roomMessage);
 //            }
-
+            }
         } catch (Exception e) {
             log.error(e.getMessage());
         }
