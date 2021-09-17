@@ -1,5 +1,6 @@
 package com.project.chawchaw;
 
+import com.project.chawchaw.config.email.EmailConfig;
 import com.project.chawchaw.config.jasypt.JasyptConfig;
 import com.ulisesbocchio.jasyptspringboot.environment.StandardEncryptableEnvironment;
 import lombok.RequiredArgsConstructor;

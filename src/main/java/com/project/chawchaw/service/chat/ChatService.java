@@ -24,6 +24,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.*;
+import java.util.stream.Collectors;
 
 @RequiredArgsConstructor
 @Service
@@ -45,6 +46,7 @@ public class ChatService {
     private Map<Long, ChannelTopic> topics=new HashMap<>();
 
 
+    @Transactional
     public void publish(ChannelTopic topic, ChatMessageDto message) {
 
 
@@ -60,11 +62,13 @@ public class ChatService {
         ChatRoom chatRoom = chatRoomRepository.save(ChatRoom.createChatRoom(UUID.randomUUID().toString()));
         chatRoomUserRepository.save(ChatRoomUser.createChatRoomUser(chatRoom,toUser));
         chatRoomUserRepository.save(ChatRoomUser.createChatRoomUser(chatRoom,fromUser));
-        ChatMessageDto chatMessageDto = new ChatMessageDto(MessageType.ENTER,chatRoom.getId(), fromUserId, fromUser.getName(), fromUser.getName() + "님이 입장하셨습니다.",fromUser.getImageUrl(), LocalDateTime.now().withNano(0),false);
-        chatMessageRepository.createChatMessage(chatMessageDto);
+//        ChatMessageDto chatMessageDto = new ChatMessageDto(MessageType.ENTER,chatRoom.getId(), fromUserId, fromUser.getName(), fromUser.getName() + "님이 입장하셨습니다.",fromUser.getImageUrl(), LocalDateTime.now().withNano(0),false);
+//        chatMessageRepository.createChatMessage(chatMessageDto);
 //        messagingTemplate.convertAndSend("/queue/chat/room/wait/" + toUserId,chatMessageDto );
 //        messagingTemplate.convertAndSend("/queue/alarm/chat/" + toUserId, chatMessageDto);
-          messagingTemplate.convertAndSend("/queue/chat/" + toUserId, chatMessageDto);
+//          messagingTemplate.convertAndSend("/queue/chat/" + toUserId, chatMessageDto);
+        chatMessageRepository.createChatRoomUserIsExit(toUserId,false);
+        chatMessageRepository.createChatRoomUserIsExit(fromUserId,false);
 
           return new ChatRoomDto(chatRoom.getId(),chatRoom.getName());
 
@@ -98,17 +102,20 @@ public class ChatService {
 //        return chatDtos;
 
     }
+    @Transactional
     public ChatRoomDto isChatRoom(Long fromUserId, Long toUserId){
         Optional<ChatRoomUser> chatRoomUser = chatRoomUserRepository.isChatRoom(fromUserId, toUserId);
         if(chatRoomUser.isPresent()){
-            ChatRoom chatRoom = chatRoomUser.get().getChatRoom();
+            ChatRoomUser getChatRoomUser = chatRoomUser.get();
+            ChatRoom chatRoom = getChatRoomUser.getChatRoom();
+
             return new ChatRoomDto(chatRoom.getId(),chatRoom.getName());
         }
         else{
             return null;
         }
     }
-    public List<ChatMessageDto> getChatMessageByRegDate(Long id){
+    public List<ChatMessageDto> getChatMessageByIsRead(Long id){
         List<ChatMessageDto> chatMessageDto=new ArrayList<>();
 //        User user = userRepository.findById(id).orElseThrow(UserNotFoundException::new);
 
@@ -119,8 +126,8 @@ public class ChatService {
             List<ChatRoomUser> chatRoomUserByRoomId = chatRoomUserRepository.findByRoomId(chatRoomUser1.getChatRoom().getId());
             for(int j=0;j<chatRoomUserByRoomId.size();j++){
                 ChatRoomUser chatRoomUser2 = chatRoomUserByRoomId.get(j);
-                if(!chatRoomUser2.getUser().getId().equals(id)){
-                    chatMessageRepository.findChatMessageByRoomId(chatRoomUser2.getChatRoom().getId()).stream().forEach(
+                if(chatRoomUser2.getUser().getId().equals(id)){
+                    chatMessageRepository.findChatMessageByRoomId(chatRoomUser2.getChatRoom().getId(),chatRoomUser2.getExitDate()).stream().forEach(
                             c->{
                                 if(!c.getIsRead())chatMessageDto.add(c);
                             }
@@ -144,21 +151,26 @@ public class ChatService {
 //
         List<ChatRoomUser> chatRoomUserByUserId = chatRoomUserRepository.findByChatRoomUserByUserId(id);
 
+
         for(int i=0;i<chatRoomUserByUserId.size();i++){
             ChatRoomUser chatRoomUser1 = chatRoomUserByUserId.get(i);
             List<ChatRoomUser> chatRoomUserByRoomId = chatRoomUserRepository.findByRoomId(chatRoomUser1.getChatRoom().getId());
             ChatDto chatDto=new ChatDto();
             ChatRoom chatRoom=chatRoomUser1.getChatRoom();
+
             for(int j=0;j<chatRoomUserByRoomId.size();j++){
                 User user = chatRoomUserByRoomId.get(j).getUser();
-                if(!user.getId().equals(id)) {
+
                     chatDto.getParticipantNames().add(user.getName());
                     chatDto.getParticipantIds().add(user.getId());
                     chatDto.getParticipantImageUrls().add(user.getImageUrl());
-                }
+
+                    if(user.getId().equals(id)){
+                        chatDto.setMessages(chatMessageRepository.findChatMessageByRoomId(chatRoom.getId(),chatRoomUserByRoomId.get(j).getExitDate()));
+                    }
 
             }
-            chatDto.setMessages(chatMessageRepository.findChatMessageByRoomId(chatRoom.getId()));
+
             chatDtos.add(chatDto);
         }
 
@@ -166,46 +178,79 @@ public class ChatService {
 
 
     }
+//    public List<ChatDto> getChatByExitDate(Long id,LocalDateTime exitDate){
+//        List<ChatDto> chatDtos=new ArrayList<>();
+////       chatDtos.add(new ChatDto(chatRoom.getId(),toUser.getId(),toUser.getName(),toUser.getImageUrl(),
+////               chatMessageRepository.findChatMessageByRoomId(chatRoom.getId())));
+////
+//        List<ChatRoomUser> chatRoomUserByUserId = chatRoomUserRepository.findByChatRoomUserByUserId(id);
+//
+//        for(int i=0;i<chatRoomUserByUserId.size();i++){
+//            ChatRoomUser chatRoomUser1 = chatRoomUserByUserId.get(i);
+//            List<ChatRoomUser> chatRoomUserByRoomId = chatRoomUserRepository.findByRoomId(chatRoomUser1.getChatRoom().getId());
+//            ChatDto chatDto=new ChatDto();
+//            ChatRoom chatRoom=chatRoomUser1.getChatRoom();
+//            for(int j=0;j<chatRoomUserByRoomId.size();j++){
+//                User user = chatRoomUserByRoomId.get(j).getUser();
+////                if(!user.getId().equals(id)) {
+//                chatDto.getParticipantNames().add(user.getName());
+//                chatDto.getParticipantIds().add(user.getId());
+//                chatDto.getParticipantImageUrls().add(user.getImageUrl());
+////                }
+//
+//            }
+//            chatDto.setMessages(chatMessageRepository.findChatMessageByRoomId(chatRoom.getId()));
+//            chatDtos.add(chatDto);
+//        }
+//
+//        return chatDtos;
+//
+//
+//    }
+//
+
+
+
+
+    /**
+     채팅방 삭제**/
     @Transactional
     public void deleteChatRoom(Long roomId,Long userId){
 //        User user = userRepository.findById(userId).orElseThrow(UserNotFoundException::new);
-//        List<ChatRoomUser> findChatRoomUser = chatRoomUserRepository.findByRoomId(roomId);
-//        System.out.println("채팅인원수");
-//        System.out.println(findChatRoomUser.size());
-//        if(findChatRoomUser.size()>=2){
-//            for(ChatRoomUser c:findChatRoomUser){
-//                if(c.getUser().getId().equals(userId)){
-//                    chatRoomUserRepository.delete(c);
-//                }
-//            }
-//            ChatMessageDto message = new ChatMessageDto(
-//                    MessageType.EXIT, roomId, userId, user.getName(),
-//                    user.getName() + "님이 퇴장하셨습니다.", LocalDateTime.now().withNano(0));
-//
-//            /** 한번 입장 후 지속?**/
-//            enterChatRoom(roomId);
-//           publish(getTopic(roomId), message);
-//
-//        }
-//        else{
-//            chatRoomRepository.delete(findChatRoomUser.get(0).getChatRoom());
-//            chatMessageRepository.deleteByRoomId(roomId);
-//        }
-        User user = userRepository.findById(userId).orElseThrow(UserNotFoundException::new);
-        ChatRoom chatRoom = chatRoomRepository.findById(roomId).orElseThrow(ChatRoomNotFoundException::new);
-        chatRoomRepository.delete(chatRoom);
-        chatMessageRepository.deleteByRoomId(roomId);
-        ChatMessageDto message = new ChatMessageDto(
-                MessageType.EXIT, roomId, user.getId(), user.getName(),
-                user.getName() + "님이 퇴장하셨습니다.", user.getImageUrl(),LocalDateTime.now().withNano(0),false);
+        List<ChatRoomUser> findChatRoomUser = chatRoomUserRepository.findByRoomId(roomId);
+        int check=0;
+        for(ChatRoomUser chatRoomUser :findChatRoomUser){
+           if(chatRoomUser.getUser().getId().equals(userId)){
+               chatRoomUser.changeExitDate();
+               chatMessageRepository.createChatRoomUserIsExit(chatRoomUser.getId(),true);
+           }
 
-        for(ChatRoomUser chatRoomUser:chatRoom.getChatRoomUsers()) {
-            Long chatUserId=chatRoomUser.getUser().getId();
-            if(!userId.equals(chatUserId)) {
-                messagingTemplate.convertAndSend("/queue/chat/" + chatUserId, message);
+           if(!chatMessageRepository.getChatRoomUserIsExit(chatRoomUser.getId())){
+               check=1;
+           }
+       }
 
-            }
+
+       if(check==0){
+            chatRoomRepository.delete(findChatRoomUser.get(0).getChatRoom());
+            chatMessageRepository.deleteByRoomId(roomId);
+            chatMessageRepository.deleteChatRoomUserIsExit(findChatRoomUser.stream().map(f->f.getId()).collect(Collectors.toList()));
         }
+//        User user = userRepository.findById(userId).orElseThrow(UserNotFoundException::new);
+//        ChatRoom chatRoom = chatRoomRepository.findById(roomId).orElseThrow(ChatRoomNotFoundException::new);
+//        chatRoomRepository.delete(chatRoom);
+//        chatMessageRepository.deleteByRoomId(roomId);
+//        ChatMessageDto message = new ChatMessageDto(
+//                MessageType.EXIT, roomId, user.getId(), user.getName(),
+//                user.getName() + "님이 퇴장하셨습니다.", user.getImageUrl(),LocalDateTime.now().withNano(0),false);
+//
+//        for(ChatRoomUser chatRoomUser:chatRoom.getChatRoomUsers()) {
+//            Long chatUserId=chatRoomUser.getUser().getId();
+//            if(!userId.equals(chatUserId)) {
+//                messagingTemplate.convertAndSend("/queue/chat/" + chatUserId, message);
+//
+//            }
+//        }
 
 
     }

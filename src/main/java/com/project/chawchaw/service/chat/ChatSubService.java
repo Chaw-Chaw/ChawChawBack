@@ -25,6 +25,7 @@ public class ChatSubService implements MessageListener {
     private final RedisTemplate redisTemplate;
     private final SimpMessageSendingOperations messagingTemplate;
     private final ChatRoomUserRepository chatRoomUserRepository;
+    private final ChatMessageRepository chatMessageRepository;
 
     /**
      * Redis에서 메시지가 발행(publish)되면 대기하고 있던 onMessage가 해당 메시지를 받아 처리한다.
@@ -46,6 +47,8 @@ public class ChatSubService implements MessageListener {
             for(ChatRoomUser chatRoomUser:chatRoomUserList) {
                 Long userId = chatRoomUser.getUser().getId();
                 if (!roomMessage.getSenderId().equals(userId)) {
+//                   chatRoomUser.changeIsExit(false);
+                    chatMessageRepository.createChatRoomUserIsExit(chatRoomUser.getId(),false);
                     messagingTemplate.convertAndSend("/queue/chat/" + userId, roomMessage);
                 }
 //            for(ChatRoomUser c:chatRoomUser) {

@@ -107,7 +107,7 @@ class ChatServiceTest {
        //when
         ChatRoomDto room = chatService.createRoom(user2.getId(), user1.getId());
         em.flush(); em.clear();
-        List<ChatMessageDto> chatMessageByRoomId = chatMessageRepository.findChatMessageByRoomId(room.getRoomId());
+        List<ChatMessageDto> chatMessageByRoomId = chatMessageRepository.findChatMessageByRoomId(room.getRoomId(),null);
 
 
         //then

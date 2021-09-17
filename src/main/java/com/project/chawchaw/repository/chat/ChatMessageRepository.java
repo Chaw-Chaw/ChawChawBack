@@ -19,6 +19,7 @@ import org.springframework.data.redis.listener.RedisMessageListenerContainer;
 import org.springframework.stereotype.Repository;
 
 import javax.annotation.PostConstruct;
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
@@ -47,24 +48,35 @@ public class ChatMessageRepository {
        String  key = chatMessageDto.getRoomId().toString() + "_" + UUID.randomUUID().toString();
         if(chatMessageDto.getMessageType().equals(MessageType.IMAGE)){
             String fileName=chatMessageDto.getMessage().split("/net")[1];
-           key = chatMessageDto.getRoomId().toString()+":image"+ "_" + UUID.randomUUID().toString();
+            key = chatMessageDto.getRoomId().toString()+":image"+ "_" + UUID.randomUUID().toString();
+            redisTemplate.opsForValue().set(key,chatMessageDto);
 
         }
-
-        redisTemplate.opsForValue().set(key,chatMessageDto);
-        if(!chatMessageDto.getMessageType().equals(MessageType.ENTER)) {
+        else{
+            redisTemplate.opsForValue().set(key,chatMessageDto);
             redisTemplate.expire(key, 1, TimeUnit.DAYS);
         }
+
+
     }
 
-    public List<ChatMessageDto> findChatMessageByRoomId(Long roomId){
+    /**
+     * roomId로 챗메시지 조회**/
+    public List<ChatMessageDto> findChatMessageByRoomId(Long roomId, LocalDateTime exitDate){
         Set<String> keys = redisTemplate.keys(roomId.toString()+"_"+"*");
 
         List<ChatMessageDto>chatMessageDtos=new ArrayList<>();
-        for(String key:keys){
+        for(String key:keys) {
 
             ChatMessageDto chatMessageDto = objectMapper.convertValue(redisTemplate.opsForValue().get(key), ChatMessageDto.class);
-            chatMessageDtos.add(chatMessageDto);
+            if (exitDate == null) {
+                chatMessageDtos.add(chatMessageDto);
+            }
+            else{
+                if(chatMessageDto.getRegDate().isAfter(exitDate)){
+                    chatMessageDtos.add(chatMessageDto);
+                }
+            }
         }
 
        Collections.sort(chatMessageDtos, (c1,c2)-> {
@@ -77,6 +89,8 @@ public class ChatMessageRepository {
                 .collect(Collectors.toList());
 
     }
+
+
 
     public void deleteByRoomId(Long roomId) {
         Set<String> keys = redisTemplate.keys(roomId.toString()+"_"+"*");
@@ -109,14 +123,26 @@ public class ChatMessageRepository {
     }
 
     public void createRoomSession(String email){
-        if(redisTemplate.opsForValue().get("session::"+"_"+email)==null)
-        redisTemplate.opsForValue().set("session::"+"_"+email,-1L);
+        if(redisTemplate.opsForValue().get("session::"+email)==null)
+        redisTemplate.opsForValue().set("session::"+email,-1L);
     }
     public void deleteRoomSession(String email){
-        redisTemplate.delete("session::"+"_"+email);
+        redisTemplate.delete("session::"+email);
     }
 
 
+    /**채팅방 퇴장 여부**/
+    public void createChatRoomUserIsExit(Long chatRoomUserId,Boolean isExit){
+        redisTemplate.opsForValue().set("isExit::"+chatRoomUserId.toString(),false);
+    }
 
+    public Boolean getChatRoomUserIsExit(Long chatRoomUserId){
+         return (Boolean)redisTemplate.opsForValue().get("isExit::" + chatRoomUserId.toString());
+    }
+
+    public void deleteChatRoomUserIsExit(List<Long> chatRoomUserIdList){
+        for(Long chatRoomUserId:chatRoomUserIdList)
+        redisTemplate.delete("isExit::" + chatRoomUserId.toString());
+    }
 
 }

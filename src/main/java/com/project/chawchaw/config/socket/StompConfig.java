@@ -34,7 +34,6 @@ public class StompConfig implements ChannelInterceptor {
     @Override
     public Message<?> preSend(Message<?> message, MessageChannel channel) {
         StompHeaderAccessor accessor = StompHeaderAccessor.wrap(message);
-        String path = accessor.getFirstNativeHeader("ws-path");
 
         if (StompCommand.CONNECT == accessor.getCommand()) {
             String token = accessor.getFirstNativeHeader("Authorization");
@@ -51,9 +50,10 @@ public class StompConfig implements ChannelInterceptor {
             if(!user.getRole().equals(ROLE.USER)) return null;
 
             accessor.setUser(jwtTokenProvider.getAuthentication(token));
-              if (path.equals("chat")){
-                  chatMessageRepository.createRoomSession(user.getEmail());
-              }
+
+
+            chatMessageRepository.createRoomSession(user.getEmail());
+
 
 
         }

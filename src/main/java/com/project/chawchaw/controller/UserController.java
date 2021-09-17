@@ -5,8 +5,6 @@ import com.project.chawchaw.config.jwt.JwtTokenProvider;
 import com.project.chawchaw.config.response.DefaultResponseVo;
 import com.project.chawchaw.config.response.ResponseMessage;
 import com.project.chawchaw.dto.alarm.AlarmDto;
-import com.project.chawchaw.dto.chat.ChatMessageDto;
-import com.project.chawchaw.dto.follow.FollowAlarmDto;
 import com.project.chawchaw.dto.user.*;
 import com.project.chawchaw.service.FollowService;
 import com.project.chawchaw.service.S3Service;
@@ -25,7 +23,6 @@ import org.springframework.web.multipart.MultipartFile;
 import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 import javax.validation.Valid;
-import java.util.List;
 
 @RestController
 @RequiredArgsConstructor
@@ -196,7 +193,7 @@ public class UserController {
         Long userId = Long.valueOf(jwtTokenProvider.getUserPk(token));
 
         return new ResponseEntity(DefaultResponseVo.res(ResponseMessage.ALARM_FIND_SUCCESS, true,
-                new AlarmDto(chatService.getChatMessageByRegDate(userId),
+                new AlarmDto(chatService.getChatMessageByIsRead(userId),
                         followService.getFollowAlarm(userId))), HttpStatus.OK);
 
     }

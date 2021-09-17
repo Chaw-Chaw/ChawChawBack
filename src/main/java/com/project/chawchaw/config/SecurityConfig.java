@@ -55,7 +55,8 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
                 .logout().logoutSuccessHandler(new LogoutHandler(userService,jwtTokenProvider))
                 .and()
                 .authorizeRequests() // 다음 리퀘스트에 대한 사용권한 체크
-                .antMatchers("/login","/users/signup","/mail/**","/users/email/**","/social/login","/users/auth/refresh",
+                .antMatchers("/login","/users/signup","/mail/**","/users/email/**"
+                        ,"/users/auth/refresh",
                         "/ws/**","/message","/queue/**","/topic/**"
                 ).permitAll() // 가입 및 인증 주소는 누구나 접근가능
                 .antMatchers(HttpMethod.GET, "/exception/**"

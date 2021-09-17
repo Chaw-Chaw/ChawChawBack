@@ -22,11 +22,11 @@ public interface ChatRoomUserRepository extends JpaRepository<ChatRoomUser,Long>
     @Query("select cu from ChatRoomUser cu where cu.user.id=:userId")
     List<ChatRoomUser>findByChatRoomUserByUserId(@Param("userId")Long userId);
 
-    @Query("select ru from ChatRoomUser ru where ru.user.id=:toUserId and ru.chatRoom.id in " +
-            "(select ru2.chatRoom.id from ChatRoomUser ru2 where ru2.user.id = :fromUserId)")
+    @Query("select ru from ChatRoomUser ru where ru.user.id=:fromUserId and ru.chatRoom.id in " +
+            "(select ru2.chatRoom.id from ChatRoomUser ru2 where ru2.user.id = :toUserId)")
     Optional<ChatRoomUser> isChatRoom(@Param("fromUserId") Long fromUserId, @Param("toUserId") Long toUserId);
 
-    @Query("select cu from ChatRoomUser cu where cu.chatRoom.id=:roomId")
+    @Query("select cu from ChatRoomUser cu join fetch cu.user join fetch cu.chatRoom where cu.chatRoom.id=:roomId")
     List<ChatRoomUser>findByRoomId(@Param("roomId")Long roomId);
 
 //    @Query("select cu from ChatRoomUser cu where cu.chatRoom.id=:roomId and cu.user.id=:userId")

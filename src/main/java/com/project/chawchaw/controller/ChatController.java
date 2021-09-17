@@ -52,9 +52,9 @@ public class ChatController {
         if (message.getRegDate()==null) {
             message.setRegDate(LocalDateTime.now().withNano(0));
         }
-        if (message.getMessageType().equals(MessageType.ENTER)) {
-            message.setMessage(message.getSender() + "님이 입장하셨습니다.");
-        }
+//        if (message.getMessageType().equals(MessageType.ENTER)) {
+//            message.setMessage(message.getSender() + "님이 입장하셨습니다.");
+//        }
         
 //        System.out.println(message.getRegDate());
         chatService.enterChatRoom(message.getRoomId());
@@ -79,7 +79,7 @@ public class ChatController {
 
         ChatRoomDto chatRoomDto = chatService.isChatRoom(fromUserId, requestDto.getUserId());
         if(chatRoomDto!=null){
-
+            chatMessageRepository.createChatRoomUserIsExit(fromUserId,false);
             return new ResponseEntity(DefaultResponseVo.res(ResponseMessage.CHATROOM_FIND_SUCCESS,
                     true,chatRoomDto), HttpStatus.OK);
         }
