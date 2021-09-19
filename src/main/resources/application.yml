@@ -27,6 +27,7 @@ spring:
     username: ENC(ifD0zstnaBqDxGwu4NlGfg==)
 
 
+
   jpa:
     database: mysql
     database-platform: org.hibernate.dialect.MySQL5Dialect
