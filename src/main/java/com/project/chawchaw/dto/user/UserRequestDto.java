@@ -1,11 +1,11 @@
-package com.project.chawchaw.dto.chat;
+package com.project.chawchaw.dto.user;
 
 import lombok.Getter;
 import lombok.Setter;
 
 @Getter
 @Setter
-public class ChatRoomRequestDto {
+public class UserRequestDto {
 
     private Long userId;
 

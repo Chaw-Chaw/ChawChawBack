@@ -22,5 +22,11 @@ public class UsersDto {
     private String repLanguage;
     private String repHopeLanguage;
 
+    public UsersDto(Long id,String name, String imageUrl){
+        this.id=id;
+        this.imageUrl=imageUrl;
+        this.name=name;
+
+    }
 
 }

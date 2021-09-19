@@ -6,6 +6,7 @@ import com.project.chawchaw.config.response.DefaultResponseVo;
 import com.project.chawchaw.config.response.ResponseMessage;
 import com.project.chawchaw.dto.alarm.AlarmDto;
 import com.project.chawchaw.dto.user.*;
+import com.project.chawchaw.service.BlockService;
 import com.project.chawchaw.service.FollowService;
 import com.project.chawchaw.service.S3Service;
 import com.project.chawchaw.service.UserService;
@@ -34,6 +35,7 @@ public class UserController {
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
     private final S3Service s3Service;
     private final FollowService followService;
+    private final BlockService blockService;
 
     @Value("${file.path}")
     private String fileRealPath;
@@ -209,6 +211,35 @@ public class UserController {
 //        return responseService.getSuccessResult();
 //
 //    }
+
+    /**
+     * 유저 차단 기능**/
+
+    @PostMapping("/users/block")
+    public ResponseEntity createUserBlock(@RequestHeader("Authorization")String token, @RequestBody UserRequestDto requestDto) {
+
+        Long userId = Long.valueOf(jwtTokenProvider.getUserPk(token));
+        blockService.createBlock(userId,requestDto.getUserId());
+        return new ResponseEntity(DefaultResponseVo.res(ResponseMessage.BLOCK_CREATE_SUCCESS,
+                true), HttpStatus.OK);
+    }
+    @DeleteMapping("/users/block")
+    public ResponseEntity deleteUserBlock(@RequestHeader("Authorization")String token, @RequestBody UserRequestDto requestDto) {
+
+        Long userId = Long.valueOf(jwtTokenProvider.getUserPk(token));
+        blockService.deleteBlock(userId,requestDto.getUserId());
+        return new ResponseEntity(DefaultResponseVo.res(ResponseMessage.BLOCK_DELETE_SUCCESS,
+                true), HttpStatus.OK);
+    }
+
+    @GetMapping("/users/block")
+    public ResponseEntity getUserBlock(@RequestHeader("Authorization")String token) {
+        Long userId = Long.valueOf(jwtTokenProvider.getUserPk(token));
+        return new ResponseEntity(DefaultResponseVo.res(ResponseMessage.BLOCK_FIND_SUCCESS,
+                true,blockService.getBlockList(userId)), HttpStatus.OK);
+
+    }
+
 
 
 
