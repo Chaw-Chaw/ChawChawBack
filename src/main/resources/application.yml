@@ -17,6 +17,7 @@ spring:
     port: 6379
 
 
+
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
 #    password: ENC(3F1eltMp3xhu5T+HyPoTIg==)
