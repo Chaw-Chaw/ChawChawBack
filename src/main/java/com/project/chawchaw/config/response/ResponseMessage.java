@@ -45,6 +45,15 @@ public class ResponseMessage {
     public static final String MOVE_CHATROOM_SUCCESS="방 이동에 성공했습니다";
     public static final String MOVE_CHATROOM_FAIL="방 이동에 실패했습니다";
 
+    /**
+     * 차단
+     **/
+    public static final String BLOCK_ALREADY_EXIST="이미 차단된 상태입니다.";
+    public static final String BLOCK_NOT_FOUND="차단되어있지 않습니다.";
+    public static final String BLOCK_CREATE_SUCCESS="차단에 성공했습니다.";
+    public static final String BLOCK_DELETE_SUCCESS="차단해제에 성공했습니다.";
+    public static final String BLOCK_FIND_SUCCESS="차단해제에 성공했습니다.";
+
 
 
     

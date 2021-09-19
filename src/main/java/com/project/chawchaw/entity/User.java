@@ -58,6 +58,9 @@ public class User{
     @OneToMany(mappedBy = "toUser")
     private List<Follow>toFollows=new ArrayList<>();
 
+    @OneToMany(mappedBy = "fromUser")
+    private List<Block> blockList=new ArrayList<>();
+
     private String repCountry;
 
     private String repLanguage;

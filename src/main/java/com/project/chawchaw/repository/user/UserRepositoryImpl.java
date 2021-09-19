@@ -20,6 +20,7 @@ import javax.persistence.EntityManager;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import static com.project.chawchaw.entity.QCountry.*;
@@ -121,7 +122,7 @@ public class UserRepositoryImpl implements  UserRepositoryCustom{
         }
     }
 
-    private BooleanExpression excludeId(List<Long> excludes) {
+    private BooleanExpression excludeId(Set<Long> excludes) {
         if(excludes!=null&&!excludes.isEmpty()){
             return user.id.notIn(excludes);
         }

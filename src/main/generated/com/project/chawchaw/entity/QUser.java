@@ -20,6 +20,8 @@ public class QUser extends EntityPathBase<User> {
 
     public static final QUser user = new QUser("user");
 
+    public final ListPath<Block, QBlock> blockList = this.<Block, QBlock>createList("blockList", Block.class, QBlock.class, PathInits.DIRECT2);
+
     public final StringPath content = createString("content");
 
     public final ListPath<UserCountry, QUserCountry> country = this.<UserCountry, QUserCountry>createList("country", UserCountry.class, QUserCountry.class, PathInits.DIRECT2);

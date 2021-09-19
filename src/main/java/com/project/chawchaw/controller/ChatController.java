@@ -7,11 +7,8 @@ import com.project.chawchaw.config.response.DefaultResponseVo;
 import com.project.chawchaw.config.response.ResponseMessage;
 import com.project.chawchaw.dto.chat.ChatMessageDto;
 import com.project.chawchaw.dto.chat.ChatRoomDto;
-import com.project.chawchaw.dto.chat.ChatRoomRequestDto;
-import com.project.chawchaw.dto.chat.MessageType;
-import com.project.chawchaw.entity.ChatRoomUser;
+import com.project.chawchaw.dto.user.UserRequestDto;
 import com.project.chawchaw.repository.chat.ChatMessageRepository;
-import com.project.chawchaw.repository.chat.ChatRoomUserRepository;
 import com.project.chawchaw.service.S3Service;
 import com.project.chawchaw.service.chat.ChatService;
 import lombok.RequiredArgsConstructor;
@@ -25,7 +22,6 @@ import org.springframework.web.multipart.MultipartFile;
 
 import javax.validation.Valid;
 import java.time.LocalDateTime;
-import java.util.Optional;
 
 @RequiredArgsConstructor
 @Controller
@@ -55,7 +51,7 @@ public class ChatController {
 //        if (message.getMessageType().equals(MessageType.ENTER)) {
 //            message.setMessage(message.getSender() + "님이 입장하셨습니다.");
 //        }
-        
+
 //        System.out.println(message.getRegDate());
         chatService.enterChatRoom(message.getRoomId());
 
@@ -72,7 +68,7 @@ public class ChatController {
     // 채팅방 생성
     @PostMapping("/chat/room")
     @ResponseBody
-    public ResponseEntity createRoom(@RequestBody ChatRoomRequestDto requestDto, @RequestHeader("Authorization") String token) {
+    public ResponseEntity createRoom(@RequestBody UserRequestDto requestDto, @RequestHeader("Authorization") String token) {
 
         Long fromUserId = Long.valueOf(jwtTokenProvider.getUserPk(token));
 //        chatRoomUserRepository.isChatRoom(false)

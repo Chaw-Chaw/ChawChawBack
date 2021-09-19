@@ -28,6 +28,7 @@ public class UserService {
     private final ViewRepository viewRepository;
     private final FollowRepository followRepository;
 
+
     @Value("${file.path}")
     private String fileRealPath;
     @Value("${file.defaultImage}")
@@ -61,8 +62,17 @@ public class UserService {
        return userDto;
 
     }
+
+    /**
+     * 같은 학교 유저 포스트 카드 조회
+     * 자기자신
+     * 차단한 유저
+     * 다른학교 학생 제외**/
+
     public List<UsersDto> users(UserSearch userSearch, Long userId){
         User user = userRepository.findById(userId).orElseThrow(UserNotFoundException::new);
+        user.getBlockList().stream().forEach(b->
+            userSearch.getExcludes().add(b.getToUser().getId()));
         userSearch.setSchool(user.getSchool());
         userSearch.getExcludes().add(userId);
 
@@ -311,6 +321,7 @@ public class UserService {
 //
 //
 //    }
+
 
 
 

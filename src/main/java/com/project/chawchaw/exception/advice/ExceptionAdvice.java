@@ -85,7 +85,18 @@ public class ExceptionAdvice {
     protected ResponseEntity chatRoomNotFoundException(HttpServletRequest request, LanguageNotFoundException e){
         return new ResponseEntity(DefaultResponseVo.res(ResponseMessage.CHATROOM_NOT_FOUND,false),HttpStatus.OK);
     }
+    @ExceptionHandler(BlockAlreadyExistException.class)
+    @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
+    protected ResponseEntity  blockAlreadyExistException(HttpServletRequest request, LanguageNotFoundException e){
+        return new ResponseEntity(DefaultResponseVo.res(ResponseMessage.BLOCK_ALREADY_EXIST,false),HttpStatus.OK);
+    }
 
+
+    @ExceptionHandler(BlockNotFoundException.class)
+    @ResponseStatus(HttpStatus.NOT_FOUND)
+    protected ResponseEntity blockNotFoundException(HttpServletRequest request, FollwNotFoundException e){
+        return new ResponseEntity(DefaultResponseVo.res(ResponseMessage.BLOCK_NOT_FOUND,false),HttpStatus.OK);
+    }
 
     @ExceptionHandler(FollwNotFoundException.class)
     @ResponseStatus(HttpStatus.NOT_FOUND)
@@ -117,6 +128,7 @@ public class ExceptionAdvice {
     protected ResponseEntity accessDeniedException(HttpServletRequest request,AccessDeniedException e){
         return new ResponseEntity(DefaultResponseVo.res(ResponseMessage.ACCESS_DENIED,false),HttpStatus.FORBIDDEN);
     }
+
 
 
 //    @ExceptionHandler(COrderNotFoundException.class)
