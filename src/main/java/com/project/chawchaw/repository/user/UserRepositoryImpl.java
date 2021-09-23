@@ -80,7 +80,7 @@ public class UserRepositoryImpl implements  UserRepositoryCustom{
 
         List<UsersDto> usersList = queryFactory.select(Projections.constructor(UsersDto.class, user.id, user.name ,user.imageUrl, user.content,
 
-                user.regDate, user.views,user.toFollows.size(),user.repCountry,user.repLanguage,user.repHopeLanguage)).distinct().from(userLanguage)
+                user.regDate, user.views,user.toLikes.size(),user.repCountry,user.repLanguage,user.repHopeLanguage)).distinct().from(userLanguage)
 
                 .join(userLanguage.language,language)
                 .join(userLanguage.user,user)
@@ -112,7 +112,7 @@ public class UserRepositoryImpl implements  UserRepositoryCustom{
 
     public OrderSpecifier<?> searchOrder(String order) {
         if (hasText(order)) {
-            if (order.equals("like")) return user.toFollows.size().desc();
+            if (order.equals("like")) return user.toLikes.size().desc();
             else if (order.equals("view")) return user.views.desc();
 
             else return user.regDate.desc();

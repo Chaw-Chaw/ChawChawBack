@@ -3,18 +3,14 @@ package com.project.chawchaw.service;
 
 
 import com.project.chawchaw.config.jwt.JwtTokenProvider;
-import com.project.chawchaw.dto.user.UserLoginRequestDto;
-import com.project.chawchaw.dto.user.UserSignUpRequestDto;
+import com.project.chawchaw.dto.user.*;
 import com.project.chawchaw.entity.*;
 import com.project.chawchaw.exception.*;
-import com.project.chawchaw.repository.CountryRepository;
 import com.project.chawchaw.repository.chat.ChatMessageRepository;
-import com.project.chawchaw.repository.follow.FollowAlarmRepository;
-import com.project.chawchaw.repository.follow.FollowRepository;
-import com.project.chawchaw.repository.LanguageRepository;
+import com.project.chawchaw.repository.like.LikeAlarmRepository;
+import com.project.chawchaw.repository.like.LikeRepository;
 import com.project.chawchaw.repository.ViewRepository;
 import com.project.chawchaw.repository.user.UserRepository;
-import com.project.chawchaw.dto.user.UserTokenDto;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -30,7 +26,9 @@ import org.springframework.transaction.annotation.Transactional;
 import javax.mail.Message;
 import javax.mail.internet.InternetAddress;
 import javax.mail.internet.MimeMessage;
+import java.util.List;
 import java.util.Random;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -46,9 +44,9 @@ public class SignService {
     private final JwtTokenProvider jwtTokenProvider;
     private final PasswordEncoder passwordEncoder;
     private final RedisTemplate redisTemplate;
-    private final FollowRepository followRepository;
+    private final LikeRepository likeRepository;
     private final ViewRepository viewRepository;
-    private final FollowAlarmRepository followAlarmRepository;
+    private final LikeAlarmRepository likeAlarmRepository;
     private final ChatMessageRepository chatMessageRepository;
 
     @Value("${file.defaultImage}")
@@ -136,26 +134,37 @@ public class SignService {
 
 
     @Transactional
-    public UserTokenDto login(UserLoginRequestDto requestDto){
+    public UserLoginResponseDto login(UserLoginRequestDto requestDto){
 
         User user = userRepository.findByEmail(requestDto.getEmail()).orElseThrow(LoginFailureException::new);
         if(!passwordEncoder.matches(requestDto.getPassword(), user.getPassword())){
             throw new LoginFailureException();
         }
+
+        return getUserLoginResponseDto(user);
+
+
+    }
+
+    private UserLoginResponseDto getUserLoginResponseDto(User user) {
         user.changeRefreshToken(jwtTokenProvider.createRefreshToken(String.valueOf(user.getId())));
-        return new UserTokenDto(user.getId(), jwtTokenProvider.createToken(String.valueOf(user.getId())), user.getRefreshToken());
+        UserTokenResponseDto userTokenResponseDto = new UserTokenResponseDto("JWT", jwtTokenProvider.createToken(String.valueOf(user.getId())), user.getRefreshToken(),
+                jwtTokenProvider.getAccessTokenExpiration(),
+                jwtTokenProvider.getRefreshTokenExpiration());
+
+        List<Long> blockIds = user.getBlockList().stream().map(b -> b.getToUser().getId()).collect(Collectors.toList());
+        return new UserLoginResponseDto(new UserProfileDto(user), userTokenResponseDto, blockIds);
     }
 
 
     @Transactional
-    public UserTokenDto loginByProvider(String email, String provider) {
+    public UserLoginResponseDto loginByProvider(String email, String provider) {
 
 
         User user = userRepository.findUserByEmailAndProvider(email, provider).orElseThrow(UserNotFoundException::new);
 
 //
-        user.changeRefreshToken(jwtTokenProvider.createRefreshToken(String.valueOf(user.getId())));
-        return new UserTokenDto(user.getId(), jwtTokenProvider.createToken(String.valueOf(user.getId())), user.getRefreshToken() );
+        return getUserLoginResponseDto(user);
 //
 
     }
@@ -219,7 +228,7 @@ public class SignService {
     @Transactional
     public void userDelete(Long userId) {
         User user = userRepository.findById(userId).orElseThrow(UserNotFoundException::new);
-        followRepository.deleteFollowByUserId(user.getId());
+        likeRepository.deleteLikeByUserId(user.getId());
         viewRepository.deleteView(user.getId());
         userRepository.delete(user);
 

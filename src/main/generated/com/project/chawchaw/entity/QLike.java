@@ -11,16 +11,16 @@ import com.querydsl.core.types.dsl.PathInits;
 
 
 /**
- * QFollow is a Querydsl query type for Follow
+ * QLike is a Querydsl query type for Like
  */
 @Generated("com.querydsl.codegen.EntitySerializer")
-public class QFollow extends EntityPathBase<Follow> {
+public class QLike extends EntityPathBase<Like> {
 
-    private static final long serialVersionUID = -1596877306L;
+    private static final long serialVersionUID = 691247916L;
 
     private static final PathInits INITS = PathInits.DIRECT2;
 
-    public static final QFollow follow = new QFollow("follow");
+    public static final QLike like = new QLike("like1");
 
     public final QUser fromUser;
 
@@ -30,23 +30,23 @@ public class QFollow extends EntityPathBase<Follow> {
 
     public final QUser toUser;
 
-    public QFollow(String variable) {
-        this(Follow.class, forVariable(variable), INITS);
+    public QLike(String variable) {
+        this(Like.class, forVariable(variable), INITS);
     }
 
-    public QFollow(Path<? extends Follow> path) {
+    public QLike(Path<? extends Like> path) {
         this(path.getType(), path.getMetadata(), PathInits.getFor(path.getMetadata(), INITS));
     }
 
-    public QFollow(PathMetadata metadata) {
+    public QLike(PathMetadata metadata) {
         this(metadata, PathInits.getFor(metadata, INITS));
     }
 
-    public QFollow(PathMetadata metadata, PathInits inits) {
-        this(Follow.class, metadata, inits);
+    public QLike(PathMetadata metadata, PathInits inits) {
+        this(Like.class, metadata, inits);
     }
 
-    public QFollow(Class<? extends Follow> type, PathMetadata metadata, PathInits inits) {
+    public QLike(Class<? extends Like> type, PathMetadata metadata, PathInits inits) {
         super(type, metadata, inits);
         this.fromUser = inits.isInitialized("fromUser") ? new QUser(forProperty("fromUser")) : null;
         this.toUser = inits.isInitialized("toUser") ? new QUser(forProperty("toUser")) : null;

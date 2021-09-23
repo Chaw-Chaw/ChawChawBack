@@ -43,10 +43,10 @@ public class ExceptionAdvice {
     protected ResponseEntity userAlreadyExistException(){
         return new ResponseEntity(DefaultResponseVo.res(ResponseMessage.DUPLICATE_USER,false),HttpStatus.OK);
     }
-    @ExceptionHandler(FollowAlreadyException.class)
+    @ExceptionHandler(LikeAlreadyException.class)
     @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
-    protected ResponseEntity followAlreadyExistException(){
-        return new ResponseEntity(DefaultResponseVo.res(ResponseMessage.ALREADY_FOLLOW,false),HttpStatus.OK);
+    protected ResponseEntity likeAlreadyExistException(){
+        return new ResponseEntity(DefaultResponseVo.res(ResponseMessage.ALREADY_LIKE,false),HttpStatus.OK);
     }
 
     @ExceptionHandler(InvalidateProviderException.class)
@@ -94,14 +94,14 @@ public class ExceptionAdvice {
 
     @ExceptionHandler(BlockNotFoundException.class)
     @ResponseStatus(HttpStatus.NOT_FOUND)
-    protected ResponseEntity blockNotFoundException(HttpServletRequest request, FollwNotFoundException e){
+    protected ResponseEntity blockNotFoundException(HttpServletRequest request, LikeNotFoundException e){
         return new ResponseEntity(DefaultResponseVo.res(ResponseMessage.BLOCK_NOT_FOUND,false),HttpStatus.OK);
     }
 
-    @ExceptionHandler(FollwNotFoundException.class)
+    @ExceptionHandler(LikeNotFoundException.class)
     @ResponseStatus(HttpStatus.NOT_FOUND)
-    protected ResponseEntity followNotFoundException(HttpServletRequest request, FollwNotFoundException e){
-        return new ResponseEntity(DefaultResponseVo.res(ResponseMessage.NOT_FOUND_FOLLOW,false),HttpStatus.OK);
+    protected ResponseEntity likeNotFoundException(HttpServletRequest request, LikeNotFoundException e){
+        return new ResponseEntity(DefaultResponseVo.res(ResponseMessage.NOT_FOUND_LIKE,false),HttpStatus.OK);
     }
 //    @ExceptionHandler(CUsernameSigninFailedException.class)
 //    @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)

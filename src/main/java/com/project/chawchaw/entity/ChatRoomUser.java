@@ -29,7 +29,7 @@ public class ChatRoomUser {
     @JoinColumn(name="chatRoom_id")
     private ChatRoom chatRoom;
 
-//    private Boolean isExit;
+    private Boolean isExit;
 
     private LocalDateTime exitDate;
 
@@ -37,15 +37,15 @@ public class ChatRoomUser {
         ChatRoomUser chatRoomUser=new ChatRoomUser();
         chatRoomUser.chatRoom=chatRoom;
         chatRoomUser.user=user;
-//        chatRoomUser.isExit=false;
+        chatRoomUser.isExit=false;
 
         return chatRoomUser;
     }
 
 
-//    public void changeIsExit(Boolean isExit){
-//        this.isExit=isExit;
-//}
+    public void changeIsExit(Boolean isExit){
+        this.isExit=isExit;
+}
     public void changeExitDate(){
         this.exitDate=LocalDateTime.now().withNano(0);
     }

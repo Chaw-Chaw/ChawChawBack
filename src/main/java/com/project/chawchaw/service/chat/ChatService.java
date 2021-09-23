@@ -67,8 +67,8 @@ public class ChatService {
 //        messagingTemplate.convertAndSend("/queue/chat/room/wait/" + toUserId,chatMessageDto );
 //        messagingTemplate.convertAndSend("/queue/alarm/chat/" + toUserId, chatMessageDto);
 //          messagingTemplate.convertAndSend("/queue/chat/" + toUserId, chatMessageDto);
-        chatMessageRepository.createChatRoomUserIsExit(toUserId,false);
-        chatMessageRepository.createChatRoomUserIsExit(fromUserId,false);
+//        chatMessageRepository.createChatRoomUserIsExit(toUserId,false);
+//        chatMessageRepository.createChatRoomUserIsExit(fromUserId,false);
 
           return new ChatRoomDto(chatRoom.getId(),chatRoom.getName());
 
@@ -107,6 +107,7 @@ public class ChatService {
         Optional<ChatRoomUser> chatRoomUser = chatRoomUserRepository.isChatRoom(fromUserId, toUserId);
         if(chatRoomUser.isPresent()){
             ChatRoomUser getChatRoomUser = chatRoomUser.get();
+            chatRoomUser.get().changeIsExit(false);
             ChatRoom chatRoom = getChatRoomUser.getChatRoom();
 
             return new ChatRoomDto(chatRoom.getId(),chatRoom.getName());
@@ -115,6 +116,7 @@ public class ChatService {
             return null;
         }
     }
+
     public List<ChatMessageDto> getChatMessageByIsRead(Long id){
         List<ChatMessageDto> chatMessageDto=new ArrayList<>();
 //        User user = userRepository.findById(id).orElseThrow(UserNotFoundException::new);
@@ -152,29 +154,36 @@ public class ChatService {
         List<ChatRoomUser> chatRoomUserByUserId = chatRoomUserRepository.findByChatRoomUserByUserId(id);
 
 
+        first:
         for(int i=0;i<chatRoomUserByUserId.size();i++){
             ChatRoomUser chatRoomUser1 = chatRoomUserByUserId.get(i);
             List<ChatRoomUser> chatRoomUserByRoomId = chatRoomUserRepository.findByRoomId(chatRoomUser1.getChatRoom().getId());
             ChatDto chatDto=new ChatDto();
             ChatRoom chatRoom=chatRoomUser1.getChatRoom();
 
-            for(int j=0;j<chatRoomUserByRoomId.size();j++){
-                User user = chatRoomUserByRoomId.get(j).getUser();
+            for (ChatRoomUser chatRoomUser : chatRoomUserByRoomId) {
+
+
+                User user = chatRoomUser.getUser();
 
                     chatDto.getParticipantNames().add(user.getName());
                     chatDto.getParticipantIds().add(user.getId());
                     chatDto.getParticipantImageUrls().add(user.getImageUrl());
+                    List<ChatMessageDto> chatMessageByRoomId = chatMessageRepository.findChatMessageByRoomId(chatRoom.getId(), chatRoomUser.getExitDate());
 
                     if(user.getId().equals(id)){
-                        chatDto.setMessages(chatMessageRepository.findChatMessageByRoomId(chatRoom.getId(),chatRoomUserByRoomId.get(j).getExitDate()));
-                    }
+                            if(chatMessageByRoomId.isEmpty()&&chatRoomUser.getIsExit().equals(true))
+                            continue first;
 
+                        }
+                    chatDto.setMessages(chatMessageByRoomId);
+
+                }
+
+                chatDtos.add(chatDto);
             }
 
-            chatDtos.add(chatDto);
-        }
-
-        return chatDtos;
+            return chatDtos;
 
 
     }
@@ -218,24 +227,53 @@ public class ChatService {
     public void deleteChatRoom(Long roomId,Long userId){
 //        User user = userRepository.findById(userId).orElseThrow(UserNotFoundException::new);
         List<ChatRoomUser> findChatRoomUser = chatRoomUserRepository.findByRoomId(roomId);
+        List<ChatMessageDto> chatMessageByRoomId = chatMessageRepository.findChatMessageByRoomId(roomId, null);
+        LocalDateTime regDate = chatMessageByRoomId.get(chatMessageByRoomId.size() - 1).getRegDate();
+
         int check=0;
         for(ChatRoomUser chatRoomUser :findChatRoomUser){
-           if(chatRoomUser.getUser().getId().equals(userId)){
-               chatRoomUser.changeExitDate();
-               chatMessageRepository.createChatRoomUserIsExit(chatRoomUser.getId(),true);
-           }
+            if(!chatRoomUser.getUser().getId().equals(userId)){
+                if(chatRoomUser.getExitDate().isBefore(regDate)){
+                    check=1;
+                }
+            }
+            else{
+                chatRoomUser.changeIsExit(true);
+                chatRoomUser.changeExitDate();
+            }
 
-           if(!chatMessageRepository.getChatRoomUserIsExit(chatRoomUser.getId())){
-               check=1;
-           }
-       }
+        }
 
-
-       if(check==0){
+        if(check==0){
             chatRoomRepository.delete(findChatRoomUser.get(0).getChatRoom());
             chatMessageRepository.deleteByRoomId(roomId);
-            chatMessageRepository.deleteChatRoomUserIsExit(findChatRoomUser.stream().map(f->f.getId()).collect(Collectors.toList()));
         }
+
+
+
+
+
+        /**
+         * 유저 퇴장여부를 redis안에 넣었을때
+         * 메시지를 보낼때마다 쿼리문이 하나씩 더 추가된다.**/
+
+//        for(ChatRoomUser chatRoomUser :findChatRoomUser){
+//           if(chatRoomUser.getUser().getId().equals(userId)){
+//               chatRoomUser.changeExitDate();
+//               chatMessageRepository.createChatRoomUserIsExit(chatRoomUser.getId(),true);
+//           }
+//
+//           if(!chatMessageRepository.getChatRoomUserIsExit(chatRoomUser.getId())){
+//               check=1;
+//           }
+//       }
+//
+//
+//       if(check==0){
+//            chatRoomRepository.delete(findChatRoomUser.get(0).getChatRoom());
+//            chatMessageRepository.deleteByRoomId(roomId);
+//            chatMessageRepository.deleteChatRoomUserIsExit(findChatRoomUser.stream().map(f->f.getId()).collect(Collectors.toList()));
+//        }
 //        User user = userRepository.findById(userId).orElseThrow(UserNotFoundException::new);
 //        ChatRoom chatRoom = chatRoomRepository.findById(roomId).orElseThrow(ChatRoomNotFoundException::new);
 //        chatRoomRepository.delete(chatRoom);
@@ -273,6 +311,7 @@ public class ChatService {
     public ChannelTopic getTopic(Long roomId) {
         return topics.get(roomId);
     }
+
 
 
 }

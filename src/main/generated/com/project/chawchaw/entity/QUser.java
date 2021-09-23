@@ -62,7 +62,7 @@ public class QUser extends EntityPathBase<User> {
 
     public final StringPath school = createString("school");
 
-    public final ListPath<Follow, QFollow> toFollows = this.<Follow, QFollow>createList("toFollows", Follow.class, QFollow.class, PathInits.DIRECT2);
+    public final ListPath<Like, QLike> toLikes = this.<Like, QLike>createList("toLikes", Like.class, QLike.class, PathInits.DIRECT2);
 
     public final NumberPath<Long> views = createNumber("views", Long.class);
 

@@ -17,7 +17,7 @@ public class UsersDto {
     private String content;
     private LocalDateTime createDate;
     private Long view;
-    private int follows;
+    private Long likes;
     private String repCountry;
     private String repLanguage;
     private String repHopeLanguage;

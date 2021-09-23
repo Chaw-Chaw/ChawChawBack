@@ -28,6 +28,8 @@ public class QChatRoomUser extends EntityPathBase<ChatRoomUser> {
 
     public final NumberPath<Long> id = createNumber("id", Long.class);
 
+    public final BooleanPath isExit = createBoolean("isExit");
+
     public final QUser user;
 
     public QChatRoomUser(String variable) {

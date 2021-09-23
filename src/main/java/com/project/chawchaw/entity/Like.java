@@ -13,7 +13,8 @@ import java.time.LocalDateTime;
 @Getter
 @AllArgsConstructor
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class Follow {
+@Table(name="likes")
+public class Like {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -29,14 +30,14 @@ public class Follow {
 
     private LocalDateTime regDate;
 
-    public static Follow createFollow(User fromUser,User toUser){
-        Follow follow=new Follow();
-        follow.fromUser=fromUser;
-        toUser.getToFollows().add(follow);
-        follow.toUser=toUser;
+    public static Like createLike(User fromUser, User toUser){
+        Like like =new Like();
+        like.fromUser=fromUser;
+        toUser.getToLikes().add(like);
+        like.toUser=toUser;
 
-        follow.regDate=LocalDateTime.now().withNano(0);
-        return follow;
+        like.regDate=LocalDateTime.now().withNano(0);
+        return like;
 
     }
 

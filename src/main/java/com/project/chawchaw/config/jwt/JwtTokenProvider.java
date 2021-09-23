@@ -136,10 +136,10 @@ public class JwtTokenProvider { // JWT 토큰을 생성 및 검증 모듈
 
     }
 
-    public Long getAccessTokenExpiration()throws Exception{
+    public Long getAccessTokenExpiration(){
         return this.tokenValidMilisecond;
     }
-    public Long getRefreshTokenExpiration()throws Exception{
+    public Long getRefreshTokenExpiration(){
         return this.refreshTokenValidMillisecond;
     }
 

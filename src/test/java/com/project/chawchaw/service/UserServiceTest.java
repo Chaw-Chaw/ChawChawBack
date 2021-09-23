@@ -46,7 +46,7 @@ class UserServiceTest {
     @Autowired
     LanguageRepository languageRepository;
     @Autowired
-    FollowService followService;
+    LikeService likeService;
 
 
     @BeforeEach
@@ -216,7 +216,7 @@ class UserServiceTest {
         //when
 
         //팔로우 여부 확인
-        followService.follow(user1.getId(), user2.getId());
+        likeService.like(user1.getId(), user2.getId());
         em.flush(); em.clear();
 
         //조회수 중복확인
@@ -234,9 +234,9 @@ class UserServiceTest {
         assertThat(userDto.getFacebookUrl()).isEqualTo(user1.getFacebookUrl());
         assertThat(userDto.getInstagramUrl()).isEqualTo(user1.getInstagramUrl());
         assertThat(userDto.getName()).isEqualTo(user1.getName());
-        assertThat(userDto.getFollows()).isEqualTo(user1.getToFollows().size());
+        assertThat(userDto.getLikes()).isEqualTo(user1.getToLikes().size());
         assertThat(userDto.getViews()).isEqualTo(1);
-        assertThat(userDto.getIsFollow()).isTrue();
+        assertThat(userDto.getIsLike()).isTrue();
     }
 
     @Test

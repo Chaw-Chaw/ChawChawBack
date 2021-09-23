@@ -3,6 +3,7 @@ package com.project.chawchaw.service.chat;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.project.chawchaw.dto.chat.ChatMessageDto;
 import com.project.chawchaw.entity.ChatRoomUser;
+import com.project.chawchaw.entity.User;
 import com.project.chawchaw.repository.chat.ChatMessageRepository;
 import com.project.chawchaw.repository.chat.ChatRoomUserRepository;
 import lombok.RequiredArgsConstructor;
@@ -14,6 +15,7 @@ import org.springframework.messaging.simp.SimpMessageSendingOperations;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 
 @Slf4j
@@ -45,15 +47,20 @@ public class ChatSubService implements MessageListener {
             List<ChatRoomUser> chatRoomUserList = chatRoomUserRepository.findByRoomId(roomMessage.getRoomId());
             // Websocket 구독자에게 채팅 메시지 Send
             for(ChatRoomUser chatRoomUser:chatRoomUserList) {
-                Long userId = chatRoomUser.getUser().getId();
-                if (!roomMessage.getSenderId().equals(userId)) {
-//                   chatRoomUser.changeIsExit(false);
-                    chatMessageRepository.createChatRoomUserIsExit(chatRoomUser.getId(),false);
-                    messagingTemplate.convertAndSend("/queue/chat/" + userId, roomMessage);
+                User user= chatRoomUser.getUser();
+                if (!roomMessage.getSenderId().equals(user.getId())) {
+//
+                    if(!user.getBlockList().stream().map(b->b.getToUser().getId()).collect(Collectors.toSet()).contains(roomMessage.getSenderId())) {
+                        if(chatMessageRepository.getRoomSession(user.getEmail())==roomMessage.getRoomId()){
+                            roomMessage.setIsRead(true);
+                        }
+                        else{
+                            roomMessage.setIsRead(false);
+                        }
+                        messagingTemplate.convertAndSend("/queue/chat/" + user.getId(), roomMessage);
+                    }
                 }
-//            for(ChatRoomUser c:chatRoomUser) {
-//                messagingTemplate.convertAndSend("/queue/chat/room/wait/" + c.getUser().getId(), roomMessage);
-//            }
+//
             }
         } catch (Exception e) {
             log.error(e.getMessage());

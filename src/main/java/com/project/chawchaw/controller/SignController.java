@@ -145,15 +145,12 @@ public class SignController {
                     KakaoProfile kakaoProfile = kakaoService.getKakaoProfile(token);
                     String email = kakaoProfile.getEmail();
                     if (signService.validUserWithProvider(email, requestDto.getProvider())) {
-                        UserTokenDto tokenDto = signService.loginByProvider(email, requestDto.getProvider());
+                        UserLoginResponseDto userLoginResponseDto = signService.loginByProvider(email, requestDto.getProvider());
 
-
-                        Cookie cookie = new Cookie("RefreshToken",tokenDto.getRefreshToken());
+                        Cookie cookie = new Cookie("RefreshToken",userLoginResponseDto.getToken().getRefreshToken());
                         response.addCookie(cookie);
-                        UserTokenResponseDto userTokenResponseDto=new UserTokenResponseDto("JWT",tokenDto.getAccessToken(),
-                                jwtTokenProvider.getAccessTokenExpiration(),
-                                jwtTokenProvider.getRefreshTokenExpiration());
-                        return new ResponseEntity(DefaultResponseVo.res(ResponseMessage.LOGIN_SUCCESS, true,new UserLoginResponseDto(userService.userProfile(tokenDto.getId()),userTokenResponseDto)), HttpStatus.OK);
+
+                        return new ResponseEntity(DefaultResponseVo.res(ResponseMessage.LOGIN_SUCCESS, true,userLoginResponseDto), HttpStatus.OK);
                     }
                     else {
                         return new ResponseEntity(DefaultResponseVo.res(ResponseMessage.SOCIAL_LOGIN_FAIL, false,
@@ -167,15 +164,12 @@ public class SignController {
                     FaceBookProfile faceBookProfile = faceBookService.getFaceBookProfile(requestDto.getFacebookToken(), requestDto.getFacebookId());
                     String email = faceBookProfile.getEmail();
                     if (signService.validUserWithProvider(email, requestDto.getProvider())) {
-                        UserTokenDto tokenDto = signService.loginByProvider(email, requestDto.getProvider());
+                        UserLoginResponseDto userLoginResponseDto = signService.loginByProvider(email, requestDto.getProvider());
 
-
-                        Cookie cookie = new Cookie("RefreshToken",tokenDto.getRefreshToken());
+                        Cookie cookie = new Cookie("RefreshToken",userLoginResponseDto.getToken().getRefreshToken());
                         response.addCookie(cookie);
-                        UserTokenResponseDto userTokenResponseDto=new UserTokenResponseDto("JWT",tokenDto.getAccessToken(),
-                                jwtTokenProvider.getAccessTokenExpiration(),
-                                jwtTokenProvider.getRefreshTokenExpiration());
-                        return new ResponseEntity(DefaultResponseVo.res(ResponseMessage.LOGIN_SUCCESS, true,new UserLoginResponseDto(userService.userProfile(tokenDto.getId()),userTokenResponseDto)), HttpStatus.OK);
+
+                        return new ResponseEntity(DefaultResponseVo.res(ResponseMessage.LOGIN_SUCCESS, true,userLoginResponseDto), HttpStatus.OK);
                     }
                     else {
                         return new ResponseEntity(DefaultResponseVo.res(ResponseMessage.SOCIAL_LOGIN_FAIL, false,
@@ -192,15 +186,13 @@ public class SignController {
             else if(requestDto.getProvider().equals("basic")){
               if(requestDto.getEmail()!=null&&requestDto.getPassword()!=null){
 
-                  UserTokenDto tokenDto = signService.login(requestDto);
+                  UserLoginResponseDto userLoginResponseDto = signService.login(requestDto);
 
 
-                  Cookie cookie = new Cookie("RefreshToken",tokenDto.getRefreshToken());
+                  Cookie cookie = new Cookie("RefreshToken",userLoginResponseDto.getToken().getRefreshToken());
                   response.addCookie(cookie);
-                  UserTokenResponseDto userTokenResponseDto=new UserTokenResponseDto("JWT",tokenDto.getAccessToken(),
-                          jwtTokenProvider.getAccessTokenExpiration(),
-                         jwtTokenProvider.getRefreshTokenExpiration());
-                  return new ResponseEntity(DefaultResponseVo.res(ResponseMessage.LOGIN_SUCCESS, true,new UserLoginResponseDto(userService.userProfile(tokenDto.getId()),userTokenResponseDto)), HttpStatus.OK);
+
+                  return new ResponseEntity(DefaultResponseVo.res(ResponseMessage.LOGIN_SUCCESS, true,userLoginResponseDto), HttpStatus.OK);
                 }
               else{
                   return new ResponseEntity(DefaultResponseVo.res(ResponseMessage.LOGIN_FAIL, false), HttpStatus.OK);
@@ -258,7 +250,7 @@ public class SignController {
 
         try{
             UserTokenDto tokenDto = signService.refreshToken(refreshToken);
-            UserTokenResponseDto userTokenResponseDto=new UserTokenResponseDto("JWT",tokenDto.getAccessToken(),
+            UserTokenResponseDto userTokenResponseDto=new UserTokenResponseDto("JWT",tokenDto.getAccessToken(),tokenDto.getRefreshToken(),
                     jwtTokenProvider.getAccessTokenExpiration(),
                     jwtTokenProvider.getRefreshTokenExpiration());
             return new ResponseEntity(DefaultResponseVo.res(ResponseMessage.REFRESH_TOKEN_SUCCESS,true,userTokenResponseDto),HttpStatus.OK);

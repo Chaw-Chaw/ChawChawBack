@@ -75,7 +75,7 @@ public class ChatController {
 
         ChatRoomDto chatRoomDto = chatService.isChatRoom(fromUserId, requestDto.getUserId());
         if(chatRoomDto!=null){
-            chatMessageRepository.createChatRoomUserIsExit(fromUserId,false);
+//            chatMessageRepository.createChatRoomUserIsExit(fromUserId,false);
             return new ResponseEntity(DefaultResponseVo.res(ResponseMessage.CHATROOM_FIND_SUCCESS,
                     true,chatRoomDto), HttpStatus.OK);
         }

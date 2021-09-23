@@ -1,4 +1,4 @@
-package com.project.chawchaw.dto.follow;
+package com.project.chawchaw.dto.like;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -11,8 +11,8 @@ import java.time.LocalDateTime;
 @Setter
 @AllArgsConstructor
 @NoArgsConstructor
-public class FollowAlarmDto {
-    private FollowType followType;
+public class LikeAlarmDto {
+    private LikeType likeType;
     private String name;
     private LocalDateTime regDate;
 }

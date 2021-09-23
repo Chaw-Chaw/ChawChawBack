@@ -2,13 +2,13 @@ package com.project.chawchaw.service;
 
 import com.project.chawchaw.dto.user.UsersDto;
 import com.project.chawchaw.entity.Block;
-import com.project.chawchaw.entity.Follow;
+import com.project.chawchaw.entity.Like;
 import com.project.chawchaw.entity.User;
 import com.project.chawchaw.exception.BlockAlreadyExistException;
 import com.project.chawchaw.exception.BlockNotFoundException;
 import com.project.chawchaw.exception.UserNotFoundException;
 import com.project.chawchaw.repository.BlockRepository;
-import com.project.chawchaw.repository.follow.FollowRepository;
+import com.project.chawchaw.repository.like.LikeRepository;
 import com.project.chawchaw.repository.user.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -24,7 +24,7 @@ public class BlockService {
 
     private final UserRepository userRepository;
     private final BlockRepository blockRepository;
-    private final FollowRepository followRepository;
+    private final LikeRepository likeRepository;
 
     /**
      * 유저 차단
@@ -34,8 +34,8 @@ public class BlockService {
         if(blockRepository.isBlock(fromUserId, toUserId).isPresent()){
             throw new BlockAlreadyExistException();
         }
-       for (Follow follow : followRepository.findByFollowWithUserId(fromUserId, toUserId)) {
-           followRepository.delete(follow);
+       for (Like like : likeRepository.findByLikeWithUserId(fromUserId, toUserId)) {
+           likeRepository.delete(like);
        }
 
 

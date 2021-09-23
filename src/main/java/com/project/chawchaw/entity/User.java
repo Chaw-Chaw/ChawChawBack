@@ -1,13 +1,13 @@
 package com.project.chawchaw.entity;
 
-import com.project.chawchaw.exception.ResourceNotFoundException;
 import lombok.*;
-import org.springframework.security.core.userdetails.UserDetails;
 
 import javax.persistence.*;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 @Entity
 @Getter
@@ -55,8 +55,12 @@ public class User{
     @OneToMany(mappedBy = "user",cascade = CascadeType.ALL)
     private List<UserHopeLanguage> hopeLanguage=new ArrayList<>();
 
+    /**
+     * 회원탈퇴 기능 추가시
+     * CASECADE
+     * LIKE,BLOCK **/
     @OneToMany(mappedBy = "toUser")
-    private List<Follow>toFollows=new ArrayList<>();
+    private List<Like> toLikes =new ArrayList<>();
 
     @OneToMany(mappedBy = "fromUser")
     private List<Block> blockList=new ArrayList<>();

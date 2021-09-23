@@ -7,7 +7,7 @@ import com.project.chawchaw.config.response.ResponseMessage;
 import com.project.chawchaw.dto.alarm.AlarmDto;
 import com.project.chawchaw.dto.user.*;
 import com.project.chawchaw.service.BlockService;
-import com.project.chawchaw.service.FollowService;
+import com.project.chawchaw.service.LikeService;
 import com.project.chawchaw.service.S3Service;
 import com.project.chawchaw.service.UserService;
 
@@ -34,7 +34,7 @@ public class UserController {
     private final JwtTokenProvider jwtTokenProvider;
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
     private final S3Service s3Service;
-    private final FollowService followService;
+    private final LikeService likeService;
     private final BlockService blockService;
 
     @Value("${file.path}")
@@ -196,7 +196,7 @@ public class UserController {
 
         return new ResponseEntity(DefaultResponseVo.res(ResponseMessage.ALARM_FIND_SUCCESS, true,
                 new AlarmDto(chatService.getChatMessageByIsRead(userId),
-                        followService.getFollowAlarm(userId))), HttpStatus.OK);
+                        likeService.getLikeAlarm(userId))), HttpStatus.OK);
 
     }
 

@@ -4,7 +4,7 @@ import com.project.chawchaw.dto.user.*;
 import com.project.chawchaw.entity.*;
 import com.project.chawchaw.exception.*;
 import com.project.chawchaw.repository.*;
-import com.project.chawchaw.repository.follow.FollowRepository;
+import com.project.chawchaw.repository.like.LikeRepository;
 import com.project.chawchaw.repository.user.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
@@ -26,7 +26,7 @@ public class UserService {
     private final UserHopeLanguageRepository userHopeLanguageRepository;
     private final UserCountryRepository userCountryRepository;
     private final ViewRepository viewRepository;
-    private final FollowRepository followRepository;
+    private final LikeRepository likeRepository;
 
 
     @Value("${file.path}")
@@ -38,7 +38,6 @@ public class UserService {
     @Transactional
     public UserDto detailUser(Long toUserId,Long fromUserId){
 
-        System.out.println(toUserId+"  "+fromUserId);
         User toUser = userRepository.findById(toUserId).orElseThrow(UserNotFoundException::new);
         User fromUser = userRepository.findById(fromUserId).orElseThrow(UserNotFoundException::new);
         if(!viewRepository.findViewByUserId(fromUserId,toUserId).isPresent()) {
@@ -48,13 +47,13 @@ public class UserService {
 
         UserDto userDto= new UserDto(toUser);
 
-        if (followRepository.findByFollow(fromUserId,toUserId).isPresent()){
+        if (likeRepository.findByLike(fromUserId,toUserId).isPresent()){
 
-            userDto.setIsFollow(true);
+            userDto.setIsLike(true);
         }
 
         else{
-            userDto.setIsFollow(false);
+            userDto.setIsLike(false);
         }
 
 

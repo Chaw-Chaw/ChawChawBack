@@ -78,10 +78,11 @@ public class ChatMessageRepository {
             }
         }
 
-       Collections.sort(chatMessageDtos, (c1,c2)-> {
-
-          return c2.getRegDate().compareTo(c1.getRegDate());
-       });
+       Collections.sort(chatMessageDtos, Comparator.comparing(ChatMessageDto::getRegDate));
+//               (c1,c2)-> {
+//
+//          return c2.getRegDate().compareTo(c1.getRegDate());
+//       });
 
         return chatMessageDtos.stream()
 //                .limit(20)
@@ -109,6 +110,7 @@ public class ChatMessageRepository {
         if(redisTemplate.opsForValue().get("session::"+"_"+email)==null){
             throw new Exception();
         }
+        redisTemplate.opsForValue().set("session::"+email,roomId);
         Set<String> keys = redisTemplate.keys(roomId.toString() + "_" + "*");
         for(String key:keys){
             ChatMessageDto chatMessageDto = objectMapper.convertValue(redisTemplate.opsForValue().get(key), ChatMessageDto.class);
@@ -118,6 +120,10 @@ public class ChatMessageRepository {
             }
 
         }
+
+    }
+    public Long getRoomSession(String email){
+        return (Long)redisTemplate.opsForValue().get("session::"+email);
 
     }
 
@@ -131,17 +137,17 @@ public class ChatMessageRepository {
 
 
     /**채팅방 퇴장 여부**/
-    public void createChatRoomUserIsExit(Long chatRoomUserId,Boolean isExit){
-        redisTemplate.opsForValue().set("isExit::"+chatRoomUserId.toString(),false);
-    }
-
-    public Boolean getChatRoomUserIsExit(Long chatRoomUserId){
-         return (Boolean)redisTemplate.opsForValue().get("isExit::" + chatRoomUserId.toString());
-    }
-
-    public void deleteChatRoomUserIsExit(List<Long> chatRoomUserIdList){
-        for(Long chatRoomUserId:chatRoomUserIdList)
-        redisTemplate.delete("isExit::" + chatRoomUserId.toString());
-    }
+//    public void createChatRoomUserIsExit(Long chatRoomUserId,Boolean isExit){
+//        redisTemplate.opsForValue().set("isExit::"+chatRoomUserId.toString(),false);
+//    }
+//
+//    public Boolean getChatRoomUserIsExit(Long chatRoomUserId){
+//         return (Boolean)redisTemplate.opsForValue().get("isExit::" + chatRoomUserId.toString());
+//    }
+//
+//    public void deleteChatRoomUserIsExit(List<Long> chatRoomUserIdList){
+//        for(Long chatRoomUserId:chatRoomUserIdList)
+//        redisTemplate.delete("isExit::" + chatRoomUserId.toString());
+//    }
 
 }

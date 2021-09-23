@@ -12,6 +12,7 @@ import lombok.Setter;
 public class UserTokenResponseDto {
    private String tokenType;
    private String accessToken;
+   private String refreshToken;
    private Long expiresIn;
    private Long refreshTokenExpiresIn;
 }

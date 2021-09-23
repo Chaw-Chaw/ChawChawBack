@@ -29,8 +29,8 @@ public class UserDto {
     private String repLanguage;
     private String repHopeLanguage;
     private Long views;
-    private int follows;
-    private Boolean isFollow;
+    private Long likes;
+    private Boolean isLike;
     private LocalDateTime days;
 
  public UserDto(User user){
@@ -40,7 +40,7 @@ public class UserDto {
      this.facebookUrl=user.getFacebookUrl();
      this.instagramUrl=user.getInstagramUrl();
      this.views=user.getViews();
-     this.follows=user.getToFollows().size();
+     this.likes=Long.valueOf(user.getToLikes().size());
      List<String> country=new ArrayList<>();
      List<String> language=new ArrayList<>();
      List<String> hopeLanguage=new ArrayList<>();
