@@ -2,6 +2,7 @@ package com.project.chawchaw.service;
 
 import com.project.chawchaw.config.jwt.JwtTokenProvider;
 import com.project.chawchaw.dto.user.UserLoginRequestDto;
+import com.project.chawchaw.dto.user.UserLoginResponseDto;
 import com.project.chawchaw.dto.user.UserTokenDto;
 import com.project.chawchaw.dto.user.UserSignUpRequestDto;
 import com.project.chawchaw.entity.ROLE;
@@ -72,13 +73,13 @@ class SignServiceTest {
       //when
 
        UserLoginRequestDto userLoginRequestDto=new UserLoginRequestDto("fpdlwjzlr@naver.com","11",null,null,null,null);
-       UserTokenDto login = signService.login(userLoginRequestDto);
+       UserLoginResponseDto login = signService.login(userLoginRequestDto);
        User user = userRepository.findByEmail(userSignUpRequestDto.getEmail()).orElseThrow(UserNotFoundException::new);
        //then
-       assertThat(jwtTokenProvider.validateToken(login.getAccessToken())).isTrue();
-       assertThat(jwtTokenProvider.validateToken(login.getRefreshToken())).isTrue();
+       assertThat(jwtTokenProvider.validateToken(login.getToken().getAccessToken())).isTrue();
+       assertThat(jwtTokenProvider.validateToken(login.getToken().getRefreshToken())).isTrue();
        assertThat(jwtTokenProvider.getAccessTokenExpiration()).isEqualTo(1000L*60*30);
-       assertThat(jwtTokenProvider.getUserPk(login.getAccessToken())).isEqualTo(String.valueOf(user.getId()));
+       assertThat(jwtTokenProvider.getUserPk(login.getToken().getAccessToken())).isEqualTo(String.valueOf(user.getId()));
 
 
    }
@@ -144,11 +145,11 @@ class SignServiceTest {
        signService.signup(userSignUpRequestDto);
        em.flush(); em.clear();
        UserLoginRequestDto userLoginRequestDto=new UserLoginRequestDto("fpdlwjzlr@naver.com","11",null,null,null,null);
-       UserTokenDto login = signService.login(userLoginRequestDto);
+       UserLoginResponseDto login = signService.login(userLoginRequestDto);
 
        //when
 
-       UserTokenDto userTokenDto = signService.refreshToken(login.getRefreshToken());
+       UserTokenDto userTokenDto = signService.refreshToken(login.getToken().getRefreshToken());
 
        User user = userRepository.findByEmail("fpdlwjzlr@naver.com").orElseThrow(UserNotFoundException::new);
 
@@ -174,10 +175,10 @@ class SignServiceTest {
         UserLoginRequestDto userLoginRequestDto=new UserLoginRequestDto("fpdlwjzlr@naver.com","11",null,null,null,null);
 
         //when
-        UserTokenDto login = signService.login(userLoginRequestDto);
+        UserLoginResponseDto login = signService.login(userLoginRequestDto);
 
         //then
-        Assertions.assertThatThrownBy(()->  signService.refreshToken(login.getRefreshToken()+"11") ).isInstanceOf(AccessDeniedException.class);
+        Assertions.assertThatThrownBy(()->  signService.refreshToken(login.getToken().getRefreshToken()+"11") ).isInstanceOf(AccessDeniedException.class);
 
     }
 
@@ -200,10 +201,10 @@ class SignServiceTest {
         UserLoginRequestDto userLoginRequestDto=new UserLoginRequestDto("fpdlwjzlr@naver.com","11",null,null,null,null);
 
         //when
-        UserTokenDto login = signService.login(userLoginRequestDto);
+        UserLoginResponseDto login = signService.login(userLoginRequestDto);
         //then
 
-        Assertions.assertThatThrownBy(()->  signService.refreshToken(login.getRefreshToken()+"11") ).isInstanceOf(AccessDeniedException.class);
+        Assertions.assertThatThrownBy(()->  signService.refreshToken(login.getToken().getRefreshToken()+"11") ).isInstanceOf(AccessDeniedException.class);
 
         jwtTokenProvider.setRefreshTokenValidMillisecond(1000L*30*60);
     }

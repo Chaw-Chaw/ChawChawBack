@@ -1,5 +1,6 @@
 package com.project.chawchaw.service.chat;
 
+import com.google.gson.Gson;
 import com.project.chawchaw.dto.chat.ChatDto;
 import com.project.chawchaw.dto.chat.ChatMessageDto;
 import com.project.chawchaw.dto.chat.ChatRoomDto;
@@ -19,18 +20,31 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.web.server.LocalServerPort;
+import org.springframework.messaging.simp.stomp.StompFrameHandler;
+import org.springframework.messaging.simp.stomp.StompHeaders;
+import org.springframework.messaging.simp.stomp.StompSession;
+import org.springframework.messaging.simp.stomp.StompSessionHandlerAdapter;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.socket.WebSocketHttpHeaders;
+import org.springframework.web.socket.client.standard.StandardWebSocketClient;
+import org.springframework.web.socket.messaging.WebSocketStompClient;
+import org.springframework.web.socket.sockjs.client.SockJsClient;
+import org.springframework.web.socket.sockjs.client.WebSocketTransport;
 
 import javax.persistence.EntityManager;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.lang.reflect.Type;
+import java.util.*;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.LinkedBlockingDeque;
 
+import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 
-@SpringBootTest
+@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @Transactional
 class ChatServiceTest {
 
@@ -54,6 +68,15 @@ class ChatServiceTest {
 
     @Autowired
     ChatRoomUserRepository chatRoomUserRepository;
+
+    @Autowired
+    Gson gson;
+
+
+    @LocalServerPort Integer port;
+    BlockingQueue<String> blockingQueue;
+    WebSocketStompClient stompClient;
+    static final String WEBSOCKET_TOPIC = "/queue/chat/";
 
     @BeforeEach
     public void beforeEach()throws Exception{
@@ -93,6 +116,15 @@ class ChatServiceTest {
 
         userService.userProfileUpdate(userUpdateDto,user1.getId());
         userService.userProfileUpdate(userUpdateDto,user2.getId());
+
+
+        /**
+         * stomp 설정
+         * **/
+
+        blockingQueue = new LinkedBlockingDeque<>();
+        stompClient = new WebSocketStompClient(new SockJsClient(
+                Arrays.asList(new WebSocketTransport(new StandardWebSocketClient()))));
     }
 
     /**
@@ -116,6 +148,56 @@ class ChatServiceTest {
         assertThat(chatRoomRepository.findById(room.getRoomId()).isPresent()).isTrue();
         assertThat(chatRoomUserRepository.findByChatRoomUserByUserId(user1.getId()).get(0).getChatRoom().getId()).isEqualTo(room.getRoomId());
         assertThat(chatRoomUserRepository.findByChatRoomUserByUserId(user2.getId()).get(0).getChatRoom().getId()).isEqualTo(room.getRoomId());
+    }
+
+
+
+
+    /**
+     * 채팅메세지 발송시 소켓통신 으로 수신되는지
+     * user1->user2**/
+    @Test
+    public void sendChatMessage()throws Exception{
+       //given
+        User user1 = userRepository.findByEmail("11").orElseThrow(UserNotFoundException::new);
+        User user2 = userRepository.findByEmail("22").orElseThrow(UserNotFoundException::new);
+        ChatRoomDto room = chatService.createRoom(user2.getId(), user1.getId());
+       //when
+        StompHeaders headers = new StompHeaders();
+//        headers.add("token", sender.getToken());
+        StompSession session = stompClient
+                .connect(getWsPath(), new WebSocketHttpHeaders() ,headers, new StompSessionHandlerAdapter() {})
+                .get(15, SECONDS);
+        session.subscribe(WEBSOCKET_TOPIC + user2.getId(), new DefaultStompFrameHandler());
+
+        // when
+//        MessageCreateRequestDto requestDto = new MessageCreateRequestDto(sender.getId(), receiver.getId(), "MESSAGE TEST");
+        ChatMessageDto chatMessageDto=new ChatMessageDto(MessageType.TALK, room.getRoomId(), user1.getId(),user1.getName(),"message",null,null,false);
+//        MessageDto messageDto = messageService.createMessage(requestDto);
+        chatService.enterChatRoom(room.getRoomId());
+        chatService.publish(chatService.getTopic(room.getRoomId()),chatMessageDto);
+
+        // then
+        String jsonResult = blockingQueue.poll(15, SECONDS);
+        Map<String, String> result = gson.fromJson(jsonResult, new HashMap().getClass());
+        assertThat(result.get("message")).isEqualTo(chatMessageDto.getMessage());
+
+       //then
+    }
+    private String getWsPath() {
+        return String.format("ws://localhost:%d/ws", port);
+    }
+
+    class DefaultStompFrameHandler implements StompFrameHandler {
+        @Override
+        public Type getPayloadType(StompHeaders stompHeaders) {
+            return byte[].class;
+        }
+
+        @Override
+        public void handleFrame(StompHeaders stompHeaders, Object o) {
+            blockingQueue.offer(new String((byte[]) o));
+        }
     }
 
 
