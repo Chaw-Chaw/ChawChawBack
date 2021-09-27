@@ -1,10 +1,16 @@
 package com.project.chawchaw.service.chat;
 
 import com.google.gson.Gson;
+import com.project.chawchaw.ChawchawApplication;
+import com.project.chawchaw.config.jwt.JwtTokenProvider;
+import com.project.chawchaw.config.socket.WebSocketConfig;
 import com.project.chawchaw.dto.chat.ChatDto;
 import com.project.chawchaw.dto.chat.ChatMessageDto;
 import com.project.chawchaw.dto.chat.ChatRoomDto;
 import com.project.chawchaw.dto.chat.MessageType;
+import com.project.chawchaw.dto.user.UserLoginRequestDto;
+import com.project.chawchaw.dto.user.UserLoginResponseDto;
+import com.project.chawchaw.dto.user.UserSignUpRequestDto;
 import com.project.chawchaw.dto.user.UserUpdateDto;
 import com.project.chawchaw.entity.Country;
 import com.project.chawchaw.entity.Language;
@@ -14,17 +20,33 @@ import com.project.chawchaw.repository.chat.ChatMessageRepository;
 import com.project.chawchaw.repository.chat.ChatRoomRepository;
 import com.project.chawchaw.repository.chat.ChatRoomUserRepository;
 import com.project.chawchaw.repository.user.UserRepository;
+import com.project.chawchaw.service.SignService;
 import com.project.chawchaw.service.UserService;
+import io.lettuce.core.dynamic.domain.Timeout;
 import org.assertj.core.api.Assertions;
+import org.junit.Before;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.runner.RunWith;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.SpringBootConfiguration;
+
+import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.boot.web.server.LocalServerPort;
+import org.springframework.messaging.converter.ByteArrayMessageConverter;
+import org.springframework.messaging.converter.MappingJackson2MessageConverter;
+import org.springframework.messaging.simp.SimpMessageSendingOperations;
 import org.springframework.messaging.simp.stomp.StompFrameHandler;
 import org.springframework.messaging.simp.stomp.StompHeaders;
 import org.springframework.messaging.simp.stomp.StompSession;
 import org.springframework.messaging.simp.stomp.StompSessionHandlerAdapter;
+import org.springframework.test.annotation.Rollback;
+import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.socket.WebSocketHttpHeaders;
 import org.springframework.web.socket.client.standard.StandardWebSocketClient;
@@ -34,19 +56,26 @@ import org.springframework.web.socket.sockjs.client.WebSocketTransport;
 
 import javax.persistence.EntityManager;
 
+import java.io.UncheckedIOException;
 import java.lang.reflect.Type;
+import java.net.SocketTimeoutException;
+import java.time.LocalDateTime;
 import java.util.*;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.LinkedBlockingDeque;
+import java.util.concurrent.*;
 
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 
+
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @Transactional
+
+//@SpringBootTest(classes =ChawchawApplication.class)
+
 class ChatServiceTest {
+
 
     @Autowired
     ChatService chatService;
@@ -72,7 +101,19 @@ class ChatServiceTest {
     @Autowired
     Gson gson;
 
+    @Autowired
+    SignService signService;
 
+    @Autowired
+     SimpMessageSendingOperations messagingTemplate;
+
+    @Autowired
+    JwtTokenProvider jwtTokenProvider;
+
+
+
+
+    //    @LocalServerPort Integer port;
     @LocalServerPort Integer port;
     BlockingQueue<String> blockingQueue;
     WebSocketStompClient stompClient;
@@ -80,6 +121,7 @@ class ChatServiceTest {
 
     @BeforeEach
     public void beforeEach()throws Exception{
+
         Language language1=Language.createLanguage("한국어","ko");
         Country country1=Country.createCountry("한국");
         em.persist(language1);
@@ -91,17 +133,30 @@ class ChatServiceTest {
         Language language3=Language.createLanguage("영어","en");
         Country country3=Country.createCountry("미국");
         em.persist(country3);
+
         em.persist(language3);
         Language language4=Language.createLanguage("불어","fr");
         Country country4=Country.createCountry("프랑스");
         em.persist(country4);
         em.persist(language4);
 
-        User user1 = User.createUser("11", "11", "11", "11", "11", "11", "11");
-        User user2 = User.createUser("22", "22", "22", "22", "22", "22", "22");
+        UserSignUpRequestDto userSignUpRequestDto1=new UserSignUpRequestDto();
+        userSignUpRequestDto1.setEmail("fpdlwjzlr@naver.com");
+        userSignUpRequestDto1.setName("김진현");
+        userSignUpRequestDto1.setPassword("11");
+        userSignUpRequestDto1.setWeb_email("32141221@dankook.ac.kr");
+        userSignUpRequestDto1.setSchool("서울시립대학교");
 
-        em.persist(user1);
-        em.persist(user2);
+        UserSignUpRequestDto userSignUpRequestDto2=new UserSignUpRequestDto();
+        userSignUpRequestDto2.setEmail("fpdlwjzlr@naver.comm");
+        userSignUpRequestDto2.setName("김진현");
+        userSignUpRequestDto2.setPassword("22");
+        userSignUpRequestDto2.setWeb_email("32141221@dankook.ac.kr");
+        userSignUpRequestDto2.setSchool("서울시립대학교");
+
+        signService.signup(userSignUpRequestDto1);
+        signService.signup(userSignUpRequestDto2);
+
         //when
         List<String> user1c=new ArrayList<>();
         user1c.add("미국");
@@ -114,9 +169,11 @@ class ChatServiceTest {
         UserUpdateDto userUpdateDto=new UserUpdateDto(user1c,user1l,user1h,"user1",
                 "facebook","insta","https://" + "d3t4l8y7wi01lo.cloudfront.net" + "/" + "defaultImage_233500392.png","한국","ko","en");
 
+        User user1 = userRepository.findByEmail("fpdlwjzlr@naver.com").orElseThrow(UserNotFoundException::new);
+        User user2 = userRepository.findByEmail("fpdlwjzlr@naver.comm").orElseThrow(UserNotFoundException::new);
+
         userService.userProfileUpdate(userUpdateDto,user1.getId());
         userService.userProfileUpdate(userUpdateDto,user2.getId());
-
 
         /**
          * stomp 설정
@@ -125,6 +182,19 @@ class ChatServiceTest {
         blockingQueue = new LinkedBlockingDeque<>();
         stompClient = new WebSocketStompClient(new SockJsClient(
                 Arrays.asList(new WebSocketTransport(new StandardWebSocketClient()))));
+//        stompClient.setMessageConverter(new ByteArrayMessageConverter());
+    }
+    @Test
+    public void dd()throws Exception{
+       //given
+        UserLoginResponseDto basic = signService.login(new UserLoginRequestDto("fpdlwjzlr@naver.com","11", null, null, null, null));
+
+       User user= userRepository.findById(Long.valueOf(jwtTokenProvider.getUserPk(basic.getToken().getAccessToken()))).orElseThrow(UserNotFoundException::new);
+
+
+        //when
+
+       //then
     }
 
     /**
@@ -133,8 +203,8 @@ class ChatServiceTest {
     @Test
     public void createChatRoom()throws Exception{
        //given
-        User user1 = userRepository.findByEmail("11").orElseThrow(UserNotFoundException::new);
-        User user2 = userRepository.findByEmail("22").orElseThrow(UserNotFoundException::new);
+        User user1 = userRepository.findByEmail("fpdlwjzlr@naver.com").orElseThrow(UserNotFoundException::new);
+        User user2 = userRepository.findByEmail("fpdlwjzlr@naver.comm").orElseThrow(UserNotFoundException::new);
 
        //when
         ChatRoomDto room = chatService.createRoom(user2.getId(), user1.getId());
@@ -152,40 +222,53 @@ class ChatServiceTest {
 
 
 
-
     /**
      * 채팅메세지 발송시 소켓통신 으로 수신되는지
      * user1->user2**/
     @Test
     public void sendChatMessage()throws Exception{
        //given
-        User user1 = userRepository.findByEmail("11").orElseThrow(UserNotFoundException::new);
-        User user2 = userRepository.findByEmail("22").orElseThrow(UserNotFoundException::new);
-        ChatRoomDto room = chatService.createRoom(user2.getId(), user1.getId());
-       //when
-        StompHeaders headers = new StompHeaders();
-//        headers.add("token", sender.getToken());
-        StompSession session = stompClient
-                .connect(getWsPath(), new WebSocketHttpHeaders() ,headers, new StompSessionHandlerAdapter() {})
-                .get(15, SECONDS);
-        session.subscribe(WEBSOCKET_TOPIC + user2.getId(), new DefaultStompFrameHandler());
+        UserLoginResponseDto basic = signService.login(new UserLoginRequestDto("fpdlwjzlr@naver.com","11", null, null, null, null));
 
-        // when
-//        MessageCreateRequestDto requestDto = new MessageCreateRequestDto(sender.getId(), receiver.getId(), "MESSAGE TEST");
-        ChatMessageDto chatMessageDto=new ChatMessageDto(MessageType.TALK, room.getRoomId(), user1.getId(),user1.getName(),"message",null,null,false);
-//        MessageDto messageDto = messageService.createMessage(requestDto);
-        chatService.enterChatRoom(room.getRoomId());
-        chatService.publish(chatService.getTopic(room.getRoomId()),chatMessageDto);
+        UserLoginResponseDto basic2 = signService.login(new UserLoginRequestDto("fpdlwjzlr@naver.comM","22", null, null, null, null));
+
+        ChatRoomDto room = chatService.createRoom(basic.getProfile().getId(), basic2.getProfile().getId());
+       //when
+
+//
+//        stompClient.setMessageConverter(new MappingJackson2MessageConverter());
+
+//        CountDownLatch latch = new CountDownLatch(1);
+        StompHeaders headers = new StompHeaders();
+        headers.add("Authorization", "Bearer "+basic.getToken().getAccessToken());
+        StompSession session = stompClient
+                    .connect(getWsPath(), new WebSocketHttpHeaders(),headers,new StompSessionHandlerAdapter() {})
+                    .get(10, SECONDS);
+
+            session.subscribe(WEBSOCKET_TOPIC + basic2.getProfile().getId(), new DefaultStompFrameHandler());
+        ChatMessageDto chatMessageDto=new ChatMessageDto(MessageType.TALK, room.getRoomId(), basic.getProfile().getId(),basic.getProfile().getName(),"message",null, LocalDateTime.now().withNano(0),false);
+
+        messagingTemplate.convertAndSend(WEBSOCKET_TOPIC+basic2.getProfile().getId(),chatMessageDto);
+//        chatService.enterChatRoom(room.getRoomId());
+//        chatService.publish(chatService.getTopic(room.getRoomId()),chatMessageDto);
+
+//        Assertions.assertThatThrownBy(() -> {
+//            stompClient
+//                    .connect(getWsPath(), new WebSocketHttpHeaders() , new StompSessionHandlerAdapter(){})
+//                    .get(10, SECONDS);
+//        }).isInstanceOf(TimeoutException.class);
+
 
         // then
-        String jsonResult = blockingQueue.poll(15, SECONDS);
+        String jsonResult = blockingQueue.poll(10, SECONDS);
         Map<String, String> result = gson.fromJson(jsonResult, new HashMap().getClass());
         assertThat(result.get("message")).isEqualTo(chatMessageDto.getMessage());
 
-       //then
+
     }
     private String getWsPath() {
         return String.format("ws://localhost:%d/ws", port);
+//        return "ws://localhost:8080/ws";
     }
 
     class DefaultStompFrameHandler implements StompFrameHandler {
@@ -199,6 +282,25 @@ class ChatServiceTest {
             blockingQueue.offer(new String((byte[]) o));
         }
     }
+
+//    public class MySessionHandler extends StompSessionHandlerAdapter {
+//        private final CountDownLatch latch;
+//
+//        public MySessionHandler(final CountDownLatch latch) {
+//            this.latch = latch;
+//        }
+//
+//        @Override
+//        public void afterConnected(StompSession session,
+//                                   StompHeaders connectedHeaders) {
+//            try {
+//                // do here some job
+//            } finally {
+//                latch.countDown();
+//            }
+//        }
+//    }
+
 
 
 }

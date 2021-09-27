@@ -62,6 +62,7 @@ public class ChatSubService implements MessageListener {
                 }
 //
             }
+            chatMessageRepository.createChatMessage(roomMessage);
         } catch (Exception e) {
             log.error(e.getMessage());
         }

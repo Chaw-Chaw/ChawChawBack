@@ -1,5 +1,6 @@
 package com.project.chawchaw.dto.user;
 
+import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;
 import org.hibernate.validator.constraints.Length;
@@ -12,6 +13,7 @@ import java.util.List;
 
 @Getter
 @Setter
+
 public class UserSignUpRequestDto {
 
     @NotBlank

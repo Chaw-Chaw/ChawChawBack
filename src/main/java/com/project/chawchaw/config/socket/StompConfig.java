@@ -15,6 +15,7 @@ import org.springframework.messaging.MessageChannel;
 import org.springframework.messaging.simp.stomp.StompCommand;
 import org.springframework.messaging.simp.stomp.StompHeaderAccessor;
 import org.springframework.messaging.support.ChannelInterceptor;
+import org.springframework.messaging.support.MessageHeaderAccessor;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 
@@ -35,28 +36,36 @@ public class StompConfig implements ChannelInterceptor {
     public Message<?> preSend(Message<?> message, MessageChannel channel) {
         StompHeaderAccessor accessor = StompHeaderAccessor.wrap(message);
 
+//        StompHeaderAccessor accessor = MessageHeaderAccessor.getAccessor(message, StompHeaderAccessor.class);
         if (StompCommand.CONNECT == accessor.getCommand()) {
+            System.out.println("connect success");
             String token = accessor.getFirstNativeHeader("Authorization");
+
             if (hasText(token) && token.startsWith("Bearer")) {
                 token=token.replace("Bearer ","");
             }
             else{
+
                 return null;
             }
+
             Long userId = Long.valueOf(jwtTokenProvider.getUserPk(token));
 
+            System.out.println(userRepository.findByEmail("fpdlwjzlr@naver.com").isPresent());
 
-            User user = userRepository.findById(userId).orElseThrow(UserNotFoundException::new);
-            if(!user.getRole().equals(ROLE.USER)) return null;
+
+//            if(!user.getRole().equals(ROLE.USER)) return null;
 
             accessor.setUser(jwtTokenProvider.getAuthentication(token));
+            System.out.println(accessor.getUser().toString());
 
 
-            chatMessageRepository.createRoomSession(user.getEmail());
+//            chatMessageRepository.createRoomSession(user.getEmail());
 
 
 
         }
+
         else if(StompCommand.DISCONNECT == accessor.getCommand()){
             if (accessor.getUser()!=null){
                 chatMessageRepository.deleteRoomSession(accessor.getUser().getName());
