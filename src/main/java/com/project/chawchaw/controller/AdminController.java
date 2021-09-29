@@ -37,7 +37,7 @@ public class AdminController {
     @PostMapping(value = "/admin/users/profile")
     public ResponseEntity updateUserByAdmin( @RequestHeader("Authorization")String token, @RequestBody UserUpdateByAdminDto userRequestDto){
         Long adminId = Long.valueOf(jwtTokenProvider.getUserPk(token));
-        userService.updateUserByAdmin(userRequestDto,adminId);
+        userService.updateUserByAdmin(userRequestDto);
         return new ResponseEntity(DefaultResponseVo.res(ResponseMessage.UPDATE_USER_SUCCESS, true), HttpStatus.OK);
 
 

@@ -339,8 +339,8 @@ public class UserService {
     }
 
     @Transactional
-    public void updateUserByAdmin(UserUpdateByAdminDto userUpdateByAdminDto,Long adminId){
-        User admin = userRepository.findById(adminId).orElseThrow(UserNotFoundException::new);
+    public void updateUserByAdmin(UserUpdateByAdminDto userUpdateByAdminDto){
+
         User user = userRepository.findById(userUpdateByAdminDto.getUserId()).orElseThrow(UserNotFoundException::new);
 
         user.changeImageUrl(userUpdateByAdminDto.getImageUrl());

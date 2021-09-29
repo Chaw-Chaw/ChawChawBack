@@ -167,7 +167,8 @@ public class UserRepositoryImpl implements  UserRepositoryCustom {
                         nameEq(adminUserSearch.getName())
 
                 ).orderBy(
-                        searchOrderByAdmin(adminUserSearch.getOrder(), adminUserSearch.getSort())).fetchResults();
+                        searchOrderByAdmin(adminUserSearch.getOrder(), adminUserSearch.getSort()))
+                .offset(pageable.getOffset()).limit(pageable.getPageSize()).fetchResults();
 
         return new PageImpl<>(usersByAdminDtoQueryResults.getResults(),pageable,usersByAdminDtoQueryResults.getTotal());
 

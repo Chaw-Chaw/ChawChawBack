@@ -1,5 +1,7 @@
 package com.project.chawchaw.service;
 
+import com.project.chawchaw.dto.admin.UserUpdateByAdminDto;
+import com.project.chawchaw.dto.admin.UsersByAdminDto;
 import com.project.chawchaw.dto.user.UserDto;
 import com.project.chawchaw.dto.user.UserSearch;
 import com.project.chawchaw.dto.user.UserUpdateDto;
@@ -335,6 +337,31 @@ class UserServiceTest {
 
 
 
+    }
+    /****/
+    @Test
+    public void updateUserByAdmin()throws Exception{
+       //given
+        User user = userRepository.findByEmail("11").orElseThrow(UserNotFoundException::new);
+
+        //when
+        UserUpdateByAdminDto userUpdateByAdminDto=new UserUpdateByAdminDto(user.getId(),"test","test","test","test");
+        userService.updateUserByAdmin(userUpdateByAdminDto);
+       em.flush();em.clear();
+        User user1 = userRepository.findById(user.getId()).orElseThrow(UserNotFoundException::new);
+        //then
+        assertThat(user1.getContent()).isEqualTo("test");
+        assertThat(user1.getImageUrl()).isEqualTo("test");
+        assertThat(user1.getFacebookUrl()).isEqualTo("test");
+        assertThat(user1.getInstagramUrl()).isEqualTo("test");
+    }
+    @Test
+    public void getUserByAdmin()throws Exception{
+       //given
+       
+       //when
+       
+       //then
     }
 
 }
