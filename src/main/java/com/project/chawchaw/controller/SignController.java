@@ -11,6 +11,7 @@ import com.project.chawchaw.dto.user.*;
 import com.project.chawchaw.config.auth.CustomUserDetails;
 import com.project.chawchaw.exception.LoginFailureException;
 import com.project.chawchaw.service.*;
+import com.project.chawchaw.service.chat.ChatService;
 import io.jsonwebtoken.ExpiredJwtException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -36,6 +37,8 @@ public class SignController {
     private final FaceBookService faceBookService;
     private final UserService userService;
     private final JwtTokenProvider jwtTokenProvider;
+    private final ChatService chatService;
+    private final S3Service s3Service;
 
 
 
@@ -273,7 +276,11 @@ public class SignController {
             ) {
 
         signService.userDelete(customUserDetails.getId());
-        return new ResponseEntity(DefaultResponseVo.res(ResponseMessage.DELETE_USER,true),HttpStatus.OK);
+        chatService.deleteChatRoomByUserId(customUserDetails.getId());
+        s3Service.deleteImage(customUserDetails.getId());
+
+
+        return new ResponseEntity(DefaultResponseVo.res(ResponseMessage.DELETE_USER_SUCCESS,true),HttpStatus.OK);
     }
 
 

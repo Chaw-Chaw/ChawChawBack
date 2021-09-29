@@ -45,6 +45,7 @@ import org.springframework.messaging.simp.stomp.StompFrameHandler;
 import org.springframework.messaging.simp.stomp.StompHeaders;
 import org.springframework.messaging.simp.stomp.StompSession;
 import org.springframework.messaging.simp.stomp.StompSessionHandlerAdapter;
+import org.springframework.test.annotation.Commit;
 import org.springframework.test.annotation.Rollback;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.springframework.transaction.annotation.Transactional;
@@ -110,9 +111,6 @@ class ChatServiceTest {
     @Autowired
     JwtTokenProvider jwtTokenProvider;
 
-
-
-
     //    @LocalServerPort Integer port;
     @LocalServerPort Integer port;
     BlockingQueue<String> blockingQueue;
@@ -157,6 +155,8 @@ class ChatServiceTest {
         signService.signup(userSignUpRequestDto1);
         signService.signup(userSignUpRequestDto2);
 
+
+
         //when
         List<String> user1c=new ArrayList<>();
         user1c.add("미국");
@@ -175,6 +175,7 @@ class ChatServiceTest {
         userService.userProfileUpdate(userUpdateDto,user1.getId());
         userService.userProfileUpdate(userUpdateDto,user2.getId());
 
+        em.flush();
         /**
          * stomp 설정
          * **/
@@ -183,19 +184,9 @@ class ChatServiceTest {
         stompClient = new WebSocketStompClient(new SockJsClient(
                 Arrays.asList(new WebSocketTransport(new StandardWebSocketClient()))));
 //        stompClient.setMessageConverter(new ByteArrayMessageConverter());
+
     }
-    @Test
-    public void dd()throws Exception{
-       //given
-        UserLoginResponseDto basic = signService.login(new UserLoginRequestDto("fpdlwjzlr@naver.com","11", null, null, null, null));
 
-       User user= userRepository.findById(Long.valueOf(jwtTokenProvider.getUserPk(basic.getToken().getAccessToken()))).orElseThrow(UserNotFoundException::new);
-
-
-        //when
-
-       //then
-    }
 
     /**
      * 채팅방생성 user1->user2
@@ -208,7 +199,7 @@ class ChatServiceTest {
 
        //when
         ChatRoomDto room = chatService.createRoom(user2.getId(), user1.getId());
-        em.flush(); em.clear();
+        em.flush();
         List<ChatMessageDto> chatMessageByRoomId = chatMessageRepository.findChatMessageByRoomId(room.getRoomId(),null);
 
 
@@ -227,12 +218,18 @@ class ChatServiceTest {
      * user1->user2**/
     @Test
     public void sendChatMessage()throws Exception{
+        blockingQueue = new LinkedBlockingDeque<>();
+        stompClient = new WebSocketStompClient(new SockJsClient(
+                Arrays.asList(new WebSocketTransport(new StandardWebSocketClient()))));
+
        //given
         UserLoginResponseDto basic = signService.login(new UserLoginRequestDto("fpdlwjzlr@naver.com","11", null, null, null, null));
 
         UserLoginResponseDto basic2 = signService.login(new UserLoginRequestDto("fpdlwjzlr@naver.comM","22", null, null, null, null));
 
         ChatRoomDto room = chatService.createRoom(basic.getProfile().getId(), basic2.getProfile().getId());
+        em.flush();
+
        //when
 
 //
@@ -245,8 +242,10 @@ class ChatServiceTest {
                     .connect(getWsPath(), new WebSocketHttpHeaders(),headers,new StompSessionHandlerAdapter() {})
                     .get(10, SECONDS);
 
-            session.subscribe(WEBSOCKET_TOPIC + basic2.getProfile().getId(), new DefaultStompFrameHandler());
+
+        session.subscribe(WEBSOCKET_TOPIC + basic2.getProfile().getId(), new DefaultStompFrameHandler());
         ChatMessageDto chatMessageDto=new ChatMessageDto(MessageType.TALK, room.getRoomId(), basic.getProfile().getId(),basic.getProfile().getName(),"message",null, LocalDateTime.now().withNano(0),false);
+
 
         messagingTemplate.convertAndSend(WEBSOCKET_TOPIC+basic2.getProfile().getId(),chatMessageDto);
 //        chatService.enterChatRoom(room.getRoomId());
@@ -263,7 +262,6 @@ class ChatServiceTest {
         String jsonResult = blockingQueue.poll(10, SECONDS);
         Map<String, String> result = gson.fromJson(jsonResult, new HashMap().getClass());
         assertThat(result.get("message")).isEqualTo(chatMessageDto.getMessage());
-
 
     }
     private String getWsPath() {
@@ -300,6 +298,7 @@ class ChatServiceTest {
 //            }
 //        }
 //    }
+
 
 
 

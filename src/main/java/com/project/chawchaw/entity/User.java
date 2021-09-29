@@ -95,6 +95,7 @@ public class User{
         user.email=email;
         user.password=password;
         user.role=ROLE.GUEST;
+        if(email.equals("admin@chawchaw.kr"))user.role=ROLE.ADMIN;
         user.provider=provider;
         user.web_email=web_email;
         user.school=school;

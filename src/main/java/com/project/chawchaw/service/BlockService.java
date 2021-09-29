@@ -57,6 +57,7 @@ public class BlockService {
     public List<UsersDto> getBlockList(Long userId){
         User user = userRepository.findById(userId).orElseThrow(UserNotFoundException::new);
         return user.getBlockList().stream().map(b->new UsersDto(b.getToUser().getId(), b.getToUser().getName(),b.getToUser().getImageUrl() )).collect(Collectors.toList());
+
     }
 
 

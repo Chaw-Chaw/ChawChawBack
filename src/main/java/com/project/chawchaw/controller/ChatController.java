@@ -104,10 +104,7 @@ public class ChatController {
 
         Long userId = Long.valueOf(jwtTokenProvider.getUserPk(token));
 
-        s3Service.deleteChatImage(chatMessageRepository.getImageByRoomId(roomId));
-        chatService.deleteChatRoom(roomId,userId);
-
-
+        if(chatService.deleteChatRoom(roomId,userId))s3Service.deleteChatImage(chatMessageRepository.getImageByRoomId(roomId));
 
         return new ResponseEntity(DefaultResponseVo.res(ResponseMessage.CHATROOM_DELETE_SUCCESS,
                 true), HttpStatus.OK);

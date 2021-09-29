@@ -31,7 +31,7 @@ public class UserDto {
     private Long views;
     private Long likes;
     private Boolean isLike;
-    private LocalDateTime days;
+    private String days;
 
  public UserDto(User user){
      this.name=user.getName();
@@ -66,7 +66,7 @@ public class UserDto {
      this.hopeLanguage=hopeLanguage;
      this.language=language;
 
-     this.days=user.getRegDate();
+     this.days=user.getRegDate().toString();
 
  }
 

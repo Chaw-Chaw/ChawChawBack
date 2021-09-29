@@ -5,7 +5,7 @@ public class ResponseMessage {
     public static final String LOGIN_FAIL = "아이디 또는 비밀번호를 확인해주세요.";
     public static final String NOT_FOUND_COUNTRY="해당 국가를 지원하지 않습니다.";
     public static final String NOT_FOUND_LANGUAGE="해당 언어를 지원하지 않습니다.";
-    public static final String READ_USER = "회원 정보 조회 성공";
+    public static final String READ_USER_SUCCESS = "회원 정보 조회 성공";
     public static final String LIKE_SUCCESS = "좋아요 성공";
     public static final String SEND_MAIL = "인증 메일이 발송되었습니다.";
     public static final String SOCIAL_LOGIN_CONNECT_FAIL="프로바이더,인가코드 또는 액세스 토큰을 확인해주세요.";
@@ -20,8 +20,8 @@ public class ResponseMessage {
     public static final String ALREADY_LIKE = "이미 좋아요 중입니다.";
     public static final String NOT_FOUND_LIKE = "좋아요 중이 아닙니다.";
     public static final String CREATED_USER_FAIL = "회원 가입 실패";
-    public static final String UPDATE_USER = "회원 정보 수정 성공";
-    public static final String DELETE_USER = "회원 탈퇴 성공";
+    public static final String UPDATE_USER_SUCCESS = "회원 정보 수정 성공";
+    public static final String DELETE_USER_SUCCESS = "회원 탈퇴 성공";
     public static final String IMAGE_UPLOAD_SUCCESS="이미지 업로드 성공";
     public static final String IMAGE_UPLOAD_FAIL="이미지 업로드 실패";
     public static final String IMAGE_DELETE_SUCCESS="이미지 삭제 성공";
@@ -44,6 +44,7 @@ public class ResponseMessage {
     public static final String ALARM_FIND_SUCCESS="알림 조회에 성공했습니다.";
     public static final String MOVE_CHATROOM_SUCCESS="방 이동에 성공했습니다";
     public static final String MOVE_CHATROOM_FAIL="방 이동에 실패했습니다";
+
 
     /**
      * 차단

@@ -1,13 +1,19 @@
 package com.project.chawchaw.service;
 
+import com.project.chawchaw.dto.admin.AdminUserSearch;
+import com.project.chawchaw.dto.admin.UserUpdateByAdminDto;
+import com.project.chawchaw.dto.admin.UsersByAdminDto;
 import com.project.chawchaw.dto.user.*;
 import com.project.chawchaw.entity.*;
 import com.project.chawchaw.exception.*;
 import com.project.chawchaw.repository.*;
+import com.project.chawchaw.repository.like.LikeAlarmRepository;
 import com.project.chawchaw.repository.like.LikeRepository;
 import com.project.chawchaw.repository.user.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -27,6 +33,8 @@ public class UserService {
     private final UserCountryRepository userCountryRepository;
     private final ViewRepository viewRepository;
     private final LikeRepository likeRepository;
+    private final BlockRepository blockRepository;
+    private final LikeAlarmRepository likeAlarmRepository;
 
 
     @Value("${file.path}")
@@ -323,5 +331,43 @@ public class UserService {
 
 
 
+    /**
+     * Admin**/
+   public Page<UsersByAdminDto> usersByAdmin(AdminUserSearch adminUserSearch, Pageable pageable){
+        return userRepository.usersListByAdmin(adminUserSearch,pageable);
+
+    }
+
+    @Transactional
+    public void updateUserByAdmin(UserUpdateByAdminDto userUpdateByAdminDto,Long adminId){
+        User admin = userRepository.findById(adminId).orElseThrow(UserNotFoundException::new);
+        User user = userRepository.findById(userUpdateByAdminDto.getUserId()).orElseThrow(UserNotFoundException::new);
+
+        user.changeImageUrl(userUpdateByAdminDto.getImageUrl());
+        user.changeInstagramUrl(userUpdateByAdminDto.getInstagramUrl());
+        user.changeFaceBookUrl(userUpdateByAdminDto.getFacebookUrl());
+        user.changeContent(userUpdateByAdminDto.getContent());
+
+    }
+
+    /**
+     * 회원탈퇴시
+     * 좋아요 데이터 알람 삭제
+     * 조회수 테이블 데이터 삭제
+     * 블락데이터 삭제
+     * 프로필 이미지 삭제 ----컨트롤러
+     * 채팅방 삭제----------컨트롤러
+     * **/
+    @Transactional
+    public void deleteUserByAdmin(Long adminId,Long userId){
+        User admin = userRepository.findById(adminId).orElseThrow(UserNotFoundException::new);
+        User user = userRepository.findById(userId).orElseThrow(UserNotFoundException::new);
+        likeRepository.deleteLikeByUserId(userId);
+        viewRepository.deleteView(userId);
+        likeAlarmRepository.deleteLikeAlarmByUserId(userId);
+        blockRepository.deleteBlockByUserId(userId);
+        userRepository.delete(user);
+
+    }
 
 }

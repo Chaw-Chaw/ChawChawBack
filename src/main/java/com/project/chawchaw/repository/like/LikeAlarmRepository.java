@@ -27,7 +27,11 @@ public class LikeAlarmRepository {
           redisTemplate.opsForValue().set(key, likeAlarmDto);
         redisTemplate.expire(key, 1, TimeUnit.DAYS);
     }
+    public void deleteLikeAlarmByUserId(Long userId){
+        Set<String> keys = redisTemplate.keys("like::"+userId.toString()+"_"+"*");
+        redisTemplate.delete(keys);
 
+    }
     public List<LikeAlarmDto> getLikeAlarmByUserId(Long toUserId, LocalDateTime lastLogOut){
         List<LikeAlarmDto> likeAlarmDtos =new ArrayList<>();
         if(lastLogOut==null){

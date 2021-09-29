@@ -49,7 +49,6 @@ public class ChatService {
     @Transactional
     public void publish(ChannelTopic topic, ChatMessageDto message) {
 
-
         redisTemplate.convertAndSend(topic.getTopic(), message);
 //        chatMessageRepository.createChatMessage(message);
     }
@@ -219,36 +218,47 @@ public class ChatService {
 //
 
 
+    @Transactional
+    public void deleteChatRoomByUserId(Long userId){
+        List<ChatRoomUser> byChatRoomUserByUserId = chatRoomUserRepository.findByChatRoomUserByUserId(userId);
+        for(ChatRoomUser chatRoomUser:byChatRoomUserByUserId){
+            Long roomId = chatRoomUser.getChatRoom().getId();
+            deleteChatRoom(roomId,userId);
+        }
+    }
 
 
     /**
-     채팅방 삭제**/
+     채팅방 삭제
+     채팅방 회원남았을시 false
+     채팅방 회원 모두 나갔을시 true**/
     @Transactional
-    public void deleteChatRoom(Long roomId,Long userId){
+    public Boolean deleteChatRoom(Long roomId,Long userId) {
 //        User user = userRepository.findById(userId).orElseThrow(UserNotFoundException::new);
         List<ChatRoomUser> findChatRoomUser = chatRoomUserRepository.findByRoomId(roomId);
         List<ChatMessageDto> chatMessageByRoomId = chatMessageRepository.findChatMessageByRoomId(roomId, null);
         LocalDateTime regDate = chatMessageByRoomId.get(chatMessageByRoomId.size() - 1).getRegDate();
 
-        int check=0;
-        for(ChatRoomUser chatRoomUser :findChatRoomUser){
-            if(!chatRoomUser.getUser().getId().equals(userId)){
-                if(chatRoomUser.getExitDate().isBefore(regDate)){
-                    check=1;
+        int check = 0;
+        for (ChatRoomUser chatRoomUser : findChatRoomUser) {
+            if (!chatRoomUser.getUser().getId().equals(userId)) {
+                if (chatRoomUser.getExitDate().isBefore(regDate)) {
+                    check = 1;
                 }
-            }
-            else{
+            } else {
                 chatRoomUser.changeIsExit(true);
                 chatRoomUser.changeExitDate();
             }
 
         }
 
-        if(check==0){
+        if (check == 0) {
             chatRoomRepository.delete(findChatRoomUser.get(0).getChatRoom());
             chatMessageRepository.deleteByRoomId(roomId);
+            return true;
         }
-
+        return false;
+    }
 
 
 
@@ -291,7 +301,7 @@ public class ChatService {
 //        }
 
 
-    }
+
 
     public void moveChatRoom(Long userId,Long roomId,String email)throws Exception{
         chatMessageRepository.moveChatRoom(userId,roomId,email);
@@ -300,6 +310,7 @@ public class ChatService {
 
 
     public void enterChatRoom(Long roomId) {
+        System.out.println(roomId);
         ChannelTopic topic = topics.get(roomId);
         if (topic == null) {
             topic = new ChannelTopic(String.valueOf(roomId));

@@ -29,6 +29,7 @@ public class UserProfileDto {
     private String repCountry;
     private String repLanguage;
     private String repHopeLanguage;
+    private String role;
 
     public UserProfileDto(User user){
         this.id=user.getId();
@@ -65,5 +66,6 @@ public class UserProfileDto {
 //        this.country=user.getCountry().stream().map(c->c.getCountry().getName()).collect(Collectors.toList());
 //        this.language=user.getLanguage().stream().map(l->l.getLanguage().getName()).collect(Collectors.toList());
 
+        this.role=user.getRole().toString();
     }
 }

@@ -2,6 +2,7 @@ package com.project.chawchaw.dto.user;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.time.LocalDateTime;
@@ -10,12 +11,13 @@ import java.util.List;
 @Getter
 @Setter
 @AllArgsConstructor
+@NoArgsConstructor
 public class UsersDto {
     private Long id;
     private String name;
     private String imageUrl;
     private String content;
-    private LocalDateTime createDate;
+    private String days;
     private Long view;
     private Long likes;
     private String repCountry;

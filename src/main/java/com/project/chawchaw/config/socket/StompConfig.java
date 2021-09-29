@@ -17,18 +17,22 @@ import org.springframework.messaging.simp.stomp.StompHeaderAccessor;
 import org.springframework.messaging.support.ChannelInterceptor;
 import org.springframework.messaging.support.MessageHeaderAccessor;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
+
+import javax.persistence.EntityManager;
 
 import static org.springframework.util.StringUtils.*;
 
 @Component
-@Slf4j
 @RequiredArgsConstructor
+
 public class StompConfig implements ChannelInterceptor {
 
     private final JwtTokenProvider jwtTokenProvider;
     private final UserRepository userRepository;
     private final ChatMessageRepository chatMessageRepository;
+
 
 
 
@@ -51,13 +55,12 @@ public class StompConfig implements ChannelInterceptor {
 
             Long userId = Long.valueOf(jwtTokenProvider.getUserPk(token));
 
-            System.out.println(userRepository.findByEmail("fpdlwjzlr@naver.com").isPresent());
+//            User user = userRepository.findById(userId).orElseThrow(UserNotFoundException::new);
 
 
 //            if(!user.getRole().equals(ROLE.USER)) return null;
 
-            accessor.setUser(jwtTokenProvider.getAuthentication(token));
-            System.out.println(accessor.getUser().toString());
+//            accessor.setUser(jwtTokenProvider.getAuthentication(token));
 
 
 //            chatMessageRepository.createRoomSession(user.getEmail());
@@ -65,12 +68,12 @@ public class StompConfig implements ChannelInterceptor {
 
 
         }
-
-        else if(StompCommand.DISCONNECT == accessor.getCommand()){
-            if (accessor.getUser()!=null){
-                chatMessageRepository.deleteRoomSession(accessor.getUser().getName());
-            }
-        }
+//
+//        else if(StompCommand.DISCONNECT == accessor.getCommand()){
+//            if (accessor.getUser()!=null){
+//                chatMessageRepository.deleteRoomSession(accessor.getUser().getName());
+//            }
+//        }
         return message;
     }
 

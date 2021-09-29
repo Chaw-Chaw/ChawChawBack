@@ -56,7 +56,7 @@ public class UserController {
     @RequestHeader("Authorization")String token){
 
 
-        return new ResponseEntity(DefaultResponseVo.res(ResponseMessage.READ_USER,true,
+        return new ResponseEntity(DefaultResponseVo.res(ResponseMessage.READ_USER_SUCCESS,true,
                 userService.detailUser(userId, Long.valueOf(jwtTokenProvider.getUserPk(token))))
                 ,HttpStatus.OK);
 
@@ -65,7 +65,7 @@ public class UserController {
     @GetMapping(value = "/users/profile")
     public ResponseEntity<UserProfileDto> userProfile(@RequestHeader("Authorization")String token){
         logger.info(token);
-        return new ResponseEntity(DefaultResponseVo.res(ResponseMessage.READ_USER,true,
+        return new ResponseEntity(DefaultResponseVo.res(ResponseMessage.READ_USER_SUCCESS,true,
                 userService.userProfile(Long.valueOf(jwtTokenProvider.getUserPk(token)))),HttpStatus.OK);
 
 
@@ -78,7 +78,7 @@ public class UserController {
 
         if(userService.userProfileUpdate(userUpdateDto,Long.valueOf(jwtTokenProvider.getUserPk(token)))) {
 
-            return new ResponseEntity(DefaultResponseVo.res(ResponseMessage.UPDATE_USER, true), HttpStatus.OK);
+            return new ResponseEntity(DefaultResponseVo.res(ResponseMessage.UPDATE_USER_SUCCESS, true), HttpStatus.OK);
         }else{
             return new ResponseEntity(DefaultResponseVo.res(ResponseMessage.SET_REP, false), HttpStatus.OK);
         }
@@ -100,7 +100,7 @@ public class UserController {
             }
         }
         System.out.println( userService.users(userSearch,Long.valueOf(jwtTokenProvider.getUserPk(token))).isEmpty());
-        return new ResponseEntity(DefaultResponseVo.res(ResponseMessage.READ_USER,true,
+        return new ResponseEntity(DefaultResponseVo.res(ResponseMessage.READ_USER_SUCCESS,true,
                 userService.users(userSearch,Long.valueOf(jwtTokenProvider.getUserPk(token)))),HttpStatus.OK);
 
     }

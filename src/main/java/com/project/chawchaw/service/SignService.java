@@ -6,6 +6,7 @@ import com.project.chawchaw.config.jwt.JwtTokenProvider;
 import com.project.chawchaw.dto.user.*;
 import com.project.chawchaw.entity.*;
 import com.project.chawchaw.exception.*;
+import com.project.chawchaw.repository.BlockRepository;
 import com.project.chawchaw.repository.chat.ChatMessageRepository;
 import com.project.chawchaw.repository.like.LikeAlarmRepository;
 import com.project.chawchaw.repository.like.LikeRepository;
@@ -46,6 +47,7 @@ public class SignService {
     private final RedisTemplate redisTemplate;
     private final LikeRepository likeRepository;
     private final ViewRepository viewRepository;
+    private final BlockRepository blockRepository;
     private final LikeAlarmRepository likeAlarmRepository;
     private final ChatMessageRepository chatMessageRepository;
 
@@ -223,6 +225,14 @@ public class SignService {
 
 
 
+    /**
+     * 회원탈퇴시
+     * 좋아요 데이터 알람 삭제
+     * 조회수 테이블 데이터 삭제
+     * 블락데이터 삭제
+     * 프로필 이미지 삭제 ----컨트롤러
+     * 채팅방 삭제----------컨트롤러
+     * **/
 
     //스프링 시큐리티 세션 처리 해야될듯
     @Transactional
@@ -230,6 +240,8 @@ public class SignService {
         User user = userRepository.findById(userId).orElseThrow(UserNotFoundException::new);
         likeRepository.deleteLikeByUserId(user.getId());
         viewRepository.deleteView(user.getId());
+        blockRepository.deleteBlockByUserId(userId);
+        likeAlarmRepository.deleteLikeAlarmByUserId(userId);
         userRepository.delete(user);
 
     }

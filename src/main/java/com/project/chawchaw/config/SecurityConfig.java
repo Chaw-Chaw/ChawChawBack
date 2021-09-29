@@ -61,7 +61,8 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
                 ).permitAll() // 가입 및 인증 주소는 누구나 접근가능
                 .antMatchers(HttpMethod.GET, "/exception/**"
                 ).permitAll()
-                .antMatchers("/chat/**","/like").hasRole("USER")// 토큰없이 접근가능 안받을시 세션 생성안됨
+                .antMatchers("/chat/**","/like").hasRole("USER")
+                .antMatchers("/admin/**").hasRole("ADMIN")// 토큰없이 접근가능 안받을시 세션 생성안됨
                 .anyRequest().authenticated()// 그외 나머지 요청은 모두 인증된 회원만 접근 가능
                 .and()
                 .exceptionHandling().authenticationEntryPoint(new CustomAuthenticationEntryPoint())

@@ -36,6 +36,7 @@ public class ChatSubService implements MessageListener {
     public void onMessage(Message message, byte[] pattern) {
         try {
 
+            System.out.println("일단왔따");
 
             // redis에서 발행된 데이터를 받아 deserialize
             String publishMessage = (String) redisTemplate.getStringSerializer().deserialize(message.getBody());
@@ -45,18 +46,21 @@ public class ChatSubService implements MessageListener {
 
 
             List<ChatRoomUser> chatRoomUserList = chatRoomUserRepository.findByRoomId(roomMessage.getRoomId());
+
             // Websocket 구독자에게 채팅 메시지 Send
             for(ChatRoomUser chatRoomUser:chatRoomUserList) {
                 User user= chatRoomUser.getUser();
                 if (!roomMessage.getSenderId().equals(user.getId())) {
 //
-                    if(!user.getBlockList().stream().map(b->b.getToUser().getId()).collect(Collectors.toSet()).contains(roomMessage.getSenderId())) {
-                        if(chatMessageRepository.getRoomSession(user.getEmail())==roomMessage.getRoomId()){
-                            roomMessage.setIsRead(true);
-                        }
-                        else{
-                            roomMessage.setIsRead(false);
-                        }
+                    if(chatMessageRepository.getRoomSession(user.getEmail())==roomMessage.getRoomId()){
+                        roomMessage.setIsRead(true);
+                    }
+                    else {
+                        roomMessage.setIsRead(false);
+                    }
+                    if(user.getBlockList().isEmpty()) messagingTemplate.convertAndSend("/queue/chat/" + user.getId(), roomMessage);
+                    else if(!user.getBlockList().stream().map(b->b.getToUser().getId()).collect(Collectors.toSet()).contains(roomMessage.getSenderId())) {
+
                         messagingTemplate.convertAndSend("/queue/chat/" + user.getId(), roomMessage);
                     }
                 }
