@@ -33,10 +33,9 @@ public class Like {
     public static Like createLike(User fromUser, User toUser){
         Like like =new Like();
         like.fromUser=fromUser;
-        toUser.getToLikes().add(like);
         like.toUser=toUser;
-
         like.regDate=LocalDateTime.now().withNano(0);
+        toUser.getToLikes().add(like);
         return like;
 
     }

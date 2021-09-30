@@ -154,11 +154,14 @@ public class UserRepositoryImpl implements  UserRepositoryCustom {
      * admin 전체회원 조회
      * **/
 
+    QUser user1 = new QUser("user1");
+    QUser user2= new QUser("user2");
+    QUser user3= new QUser("user3");
     @Override
     public Page<UsersByAdminDto> usersListByAdmin(AdminUserSearch adminUserSearch, Pageable pageable) {
         QueryResults<UsersByAdminDto> usersByAdminDtoQueryResults = queryFactory.select(Projections.constructor(UsersByAdminDto.class, user.id, user.name, user.school, user.email,
 
-                user.repCountry, user.repLanguage, user.repHopeLanguage, user.toLikes.size(), user.views, user.regDate))
+                user.repCountry, user.repLanguage, user.repHopeLanguage, user.toLikes.size().longValue(), user.views, user.regDate.stringValue()))
                 .from(user).where(
                         userLanguageEq(adminUserSearch.getLanguage()),
                         userHopeLanguageEq(adminUserSearch.getHopeLanguage()),
@@ -177,26 +180,27 @@ public class UserRepositoryImpl implements  UserRepositoryCustom {
 
 
     }
-    private BooleanExpression userLanguageEq(String name) {
+    private BooleanExpression userLanguageEq(String languageEq) {
 
-        return hasText(name) ?  user.in(select(user).from(userLanguage)
+        return hasText(languageEq) ?  user.in(
+                select(user3).from(userLanguage)
                 .join(userLanguage.language ,language)
-                .join(userLanguage.user,user)
-                .where(language.abbr.eq("a"))) : null;
+                .join(userLanguage.user,user3)
+                .where(language.abbr.eq(languageEq))) : null;
     }
-    private BooleanExpression userHopeLanguageEq(String name) {
-        return hasText(name) ?  user.in(
-                select(user).from(userHopeLanguage)
+    private BooleanExpression userHopeLanguageEq(String hopeLanguageEq) {
+        return hasText(hopeLanguageEq) ?  user.in(
+                select(user1).from(userHopeLanguage)
                         .join(userHopeLanguage.hopeLanguage , language)
-                        .join(userHopeLanguage.user)
-                        .where(language.abbr.eq("ss"))):null;
+                        .join(userHopeLanguage.user,user1)
+                        .where(language.abbr.eq(hopeLanguageEq))):null;
     }
-    private BooleanExpression userCountryEq(String name) {
-        return hasText(name) ? user.in(
-                select(user).from(userCountry)
+    private BooleanExpression userCountryEq(String countryEq) {
+        return hasText(countryEq) ? user.in(
+                select(user2).from(userCountry)
                         .join(userCountry.country , country)
-                        .join(userCountry.user)
-                        .where(country.name.eq("dd"))):null;
+                        .join(userCountry.user,user2)
+                        .where(country.name.eq(countryEq))):null;
 
     }
     private OrderSpecifier<?> searchOrderByAdmin(String order, String sort) {

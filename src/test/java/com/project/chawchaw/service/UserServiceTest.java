@@ -1,5 +1,6 @@
 package com.project.chawchaw.service;
 
+import com.project.chawchaw.dto.admin.AdminUserSearch;
 import com.project.chawchaw.dto.admin.UserUpdateByAdminDto;
 import com.project.chawchaw.dto.admin.UsersByAdminDto;
 import com.project.chawchaw.dto.user.UserDto;
@@ -16,6 +17,11 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.test.annotation.Rollback;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.persistence.EntityManager;
@@ -49,6 +55,7 @@ class UserServiceTest {
     LanguageRepository languageRepository;
     @Autowired
     LikeService likeService;
+
 
 
     @BeforeEach
@@ -356,12 +363,74 @@ class UserServiceTest {
         assertThat(user1.getInstagramUrl()).isEqualTo("test");
     }
     @Test
+    @Rollback(value = false)
     public void getUserByAdmin()throws Exception{
        //given
-       
+        User user1 = userRepository.findByEmail("11").orElseThrow(UserNotFoundException::new);
+        User user2 = userRepository.findByEmail("22").orElseThrow(UserNotFoundException::new);
+        User user3 = userRepository.findByEmail("33").orElseThrow(UserNotFoundException::new);
+        User user4 = userRepository.findByEmail("44").orElseThrow(UserNotFoundException::new);
+        User user5 = userRepository.findByEmail("55").orElseThrow(UserNotFoundException::new);
+        User user6 = userRepository.findByEmail("66").orElseThrow(UserNotFoundException::new);
+        User user7 = userRepository.findByEmail("77").orElseThrow(UserNotFoundException::new);
+        User user8 = userRepository.findByEmail("88").orElseThrow(UserNotFoundException::new);
+        User user9 = userRepository.findByEmail("99").orElseThrow(UserNotFoundException::new);
+        User user10 = userRepository.findByEmail("1010").orElseThrow(UserNotFoundException::new);
+        List<String>user1c=new ArrayList<>();
+        user1c.add("미국");
+        user1c.add("프랑스");
+        List<String>user1l=new ArrayList<>();
+        user1l.add("jp");
+        user1l.add("en");
+        List<String>user1h=new ArrayList<>();
+        user1h.add("fr");
+        UserUpdateDto userUpdateDto=new UserUpdateDto(user1c,user1l,user1h,"",
+                "facebook","insta","https://" + "d3t4l8y7wi01lo.cloudfront.net" + "/" + "defaultImage_233500392.png","한국","ko","en");
+
+        userService.userProfileUpdate(userUpdateDto, user1.getId());
+        userService.userProfileUpdate(userUpdateDto, user2.getId());
+        userService.userProfileUpdate(userUpdateDto, user3.getId());
+        userService.userProfileUpdate(userUpdateDto, user4.getId());
+        userService.userProfileUpdate(userUpdateDto, user5.getId());
+        userService.userProfileUpdate(userUpdateDto, user6.getId());
+        userService.userProfileUpdate(userUpdateDto, user7.getId());
+//        userService.userProfileUpdate(userUpdateDto, user8.getId());
+//        userService.userProfileUpdate(userUpdateDto, user9.getId());
+//        userService.userProfileUpdate(userUpdateDto, user10.getId());
+        em.flush(); em.clear();
+
        //when
-       
-       //then
+        AdminUserSearch adminUserSearch1=new AdminUserSearch();
+        adminUserSearch1.setCountry("미국");
+        adminUserSearch1.setOrder("name");
+        adminUserSearch1.setSort("desc");
+        PageRequest pageRequest1 = PageRequest.of(0, 3);
+        Page<UsersByAdminDto> usersByAdminDtos1 = userService.usersByAdmin(adminUserSearch1, pageRequest1);
+
+        likeService.like(user2.getId(),user1.getId());
+        AdminUserSearch adminUserSearch2=new AdminUserSearch();
+        adminUserSearch2.setCountry("미국");
+        adminUserSearch2.setOrder("like");
+        adminUserSearch2.setSort("desc");
+        Page<UsersByAdminDto> usersByAdminDtos2 = userService.usersByAdmin(adminUserSearch2, pageRequest1);
+
+        userService.detailUser(user2.getId(),user1.getId());
+        AdminUserSearch adminUserSearch3=new AdminUserSearch();
+        adminUserSearch3.setCountry("미국");
+        adminUserSearch3.setOrder("view");
+        adminUserSearch3.setSort("desc");
+        Page<UsersByAdminDto> usersByAdminDtos3 = userService.usersByAdmin(adminUserSearch3, pageRequest1);
+
+
+
+        //then
+
+        assertThat(usersByAdminDtos1.getContent().size()).isEqualTo(3);
+        assertThat(usersByAdminDtos1.getContent().get(0).getId()).isEqualTo(user7.getId());
+        assertThat(usersByAdminDtos1.getContent().get(1).getId()).isEqualTo(user6.getId());
+        assertThat(usersByAdminDtos1.getContent().get(2).getId()).isEqualTo(user5.getId());
+        assertThat(usersByAdminDtos2.getContent().get(0).getId()).isEqualTo(user2.getId());
+        assertThat(usersByAdminDtos3.getContent().get(0).getId()).isEqualTo(user2.getId());
     }
 
 }
