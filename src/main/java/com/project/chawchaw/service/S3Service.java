@@ -58,7 +58,7 @@ public class S3Service {
     }
 
     @Transactional
-    public String profileImageupload(MultipartFile file, Long id) throws IOException {
+    public String profileImageUpload(MultipartFile file, Long id) throws IOException {
         User user = userRepository.findById(id).orElseThrow(UserNotFoundException::new);
         String fileName = user.getImageUrl().split("net/")[1];
         SimpleDateFormat date = new SimpleDateFormat("yyyymmddHHmmss");

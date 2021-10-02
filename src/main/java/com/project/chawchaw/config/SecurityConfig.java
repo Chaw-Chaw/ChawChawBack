@@ -3,6 +3,7 @@ package com.project.chawchaw.config;
 
 import com.project.chawchaw.config.jwt.JwtAuthenticationFilter;
 import com.project.chawchaw.config.jwt.JwtTokenProvider;
+import com.project.chawchaw.config.logging.ReadableRequestWrapperFilter;
 import com.project.chawchaw.repository.user.UserRepository;
 import com.project.chawchaw.service.UserService;
 import lombok.RequiredArgsConstructor;
@@ -69,7 +70,8 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
                 .and()
                 .exceptionHandling().accessDeniedHandler(new CustomAccessDeniedHandler())
                 .and()
-                .addFilterBefore(new JwtAuthenticationFilter(jwtTokenProvider), UsernamePasswordAuthenticationFilter.class);// jwt token 필터를 id/password 인증 필터 전에 넣는다
+                .addFilterBefore(new JwtAuthenticationFilter(jwtTokenProvider), UsernamePasswordAuthenticationFilter.class)
+                .addFilterBefore(new ReadableRequestWrapperFilter(),UsernamePasswordAuthenticationFilter.class);// jwt token 필터를 id/password 인증 필터 전에 넣는다
 
 
 

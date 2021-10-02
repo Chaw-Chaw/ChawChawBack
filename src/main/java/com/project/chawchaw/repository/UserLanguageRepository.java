@@ -1,6 +1,6 @@
 package com.project.chawchaw.repository;
 
-import com.project.chawchaw.entity.UserCountry;
+import com.project.chawchaw.dto.UserLanguageDto;
 import com.project.chawchaw.entity.UserLanguage;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
@@ -21,4 +21,13 @@ public interface UserLanguageRepository extends JpaRepository<UserLanguage,Long>
     @Modifying
     @Query("delete from UserLanguage ul where ul.user.id=:userId")
     int deleteByUserId(@Param("userId")Long userId);
+
+    /**
+     * 모든학교 포함**/
+    @Query("select new com.project.chawchaw.dto.UserLanguageDto(ul.language.abbr,count(ul.language)) " +
+            "from UserLanguage ul group by ul.language order by count (ul.language) desc ")
+    List<UserLanguageDto>getPopularLanguage();
+
+
+
 }

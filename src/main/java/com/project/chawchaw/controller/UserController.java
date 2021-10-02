@@ -124,7 +124,7 @@ public class UserController {
         public ResponseEntity profileImageUpload(@RequestBody MultipartFile file,@RequestHeader("Authorization") String token){
 
         try {
-            String imageUrl = s3Service.profileImageupload(file,Long.valueOf(jwtTokenProvider.getUserPk(token)));
+            String imageUrl = s3Service.profileImageUpload(file,Long.valueOf(jwtTokenProvider.getUserPk(token)));
             if (imageUrl.isEmpty()) {
 
                 return new ResponseEntity(DefaultResponseVo.res(ResponseMessage.IMAGE_UPLOAD_FAIL, false), HttpStatus.OK);
