@@ -1,5 +1,6 @@
 package com.project.chawchaw.config.jwt;
 
+import com.project.chawchaw.config.logging.ReadableRequestWrapper;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.filter.GenericFilterBean;
@@ -37,7 +38,12 @@ public class JwtAuthenticationFilter extends GenericFilterBean {
 
 
         if(token != null && jwtTokenProvider.validateTokenWithRequest(token,request)) {
-//            logger.info("토큰 유효해");
+
+
+//
+//            ReadableRequestWrapper wrapper = new ReadableRequestWrapper((HttpServletRequest)request);
+//            filterChain.doFilter(wrapper, response);
+            System.out.println("===============================zzzzz");
 
             Authentication auth = jwtTokenProvider.getAuthentication(token);
 

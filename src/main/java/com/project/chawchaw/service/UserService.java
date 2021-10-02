@@ -1,5 +1,6 @@
 package com.project.chawchaw.service;
 
+import com.project.chawchaw.dto.UserLanguageDto;
 import com.project.chawchaw.dto.admin.AdminUserSearch;
 import com.project.chawchaw.dto.admin.UserUpdateByAdminDto;
 import com.project.chawchaw.dto.admin.UsersByAdminDto;
@@ -349,7 +350,10 @@ public class UserService {
         user.changeContent(userUpdateByAdminDto.getContent());
 
     }
-
+    public UserDto detailUserByAdmin(Long toUserId) {
+        User toUser = userRepository.findById(toUserId).orElseThrow(UserNotFoundException::new);
+        return  new UserDto(toUser);
+    }
     /**
      * 회원탈퇴시
      * 좋아요 데이터 알람 삭제
@@ -369,5 +373,29 @@ public class UserService {
         userRepository.delete(user);
 
     }
+
+
+
+
+    /**
+     * 모든학교 포함 hopeLanguage**/
+    public List<UserLanguageDto> getPopularHopeLanguage(){
+
+        return userHopeLanguageRepository.getPopularHopeLanguage();
+    }
+
+    /**
+     * 모든 학교 포함 Lan**/
+    public List<UserLanguageDto> getPopularLanguage(){
+
+        return userLanguageRepository.getPopularLanguage();
+    }
+
+    /**
+     * 학교별 회원순위**/
+    public  List<UserCountBySchoolDto> getUserCountBySchool(){
+        return userRepository.getUserCountBySchool();
+    }
+
 
 }

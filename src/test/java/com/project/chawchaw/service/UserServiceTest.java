@@ -1,12 +1,10 @@
 package com.project.chawchaw.service;
 
+import com.project.chawchaw.dto.UserLanguageDto;
 import com.project.chawchaw.dto.admin.AdminUserSearch;
 import com.project.chawchaw.dto.admin.UserUpdateByAdminDto;
 import com.project.chawchaw.dto.admin.UsersByAdminDto;
-import com.project.chawchaw.dto.user.UserDto;
-import com.project.chawchaw.dto.user.UserSearch;
-import com.project.chawchaw.dto.user.UserUpdateDto;
-import com.project.chawchaw.dto.user.UsersDto;
+import com.project.chawchaw.dto.user.*;
 import com.project.chawchaw.entity.*;
 import com.project.chawchaw.exception.UserNotFoundException;
 import com.project.chawchaw.repository.CountryRepository;
@@ -19,8 +17,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
 import org.springframework.test.annotation.Rollback;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -432,5 +428,101 @@ class UserServiceTest {
         assertThat(usersByAdminDtos2.getContent().get(0).getId()).isEqualTo(user2.getId());
         assertThat(usersByAdminDtos3.getContent().get(0).getId()).isEqualTo(user2.getId());
     }
+    
+    /**
+     * 모든학교 포함 popularHopeLanguage
+     * **/
 
+    @Test
+    public void popularHopeLanguage()throws Exception{
+       //given
+        User user1 = userRepository.findByEmail("11").orElseThrow(UserNotFoundException::new);
+        User user2 = userRepository.findByEmail("22").orElseThrow(UserNotFoundException::new);
+        User user3 = userRepository.findByEmail("33").orElseThrow(UserNotFoundException::new);
+        User user4 = userRepository.findByEmail("44").orElseThrow(UserNotFoundException::new);
+        User user5 = userRepository.findByEmail("55").orElseThrow(UserNotFoundException::new);
+        User user6 = userRepository.findByEmail("66").orElseThrow(UserNotFoundException::new);
+        User user7 = userRepository.findByEmail("77").orElseThrow(UserNotFoundException::new);
+        User user8 = userRepository.findByEmail("88").orElseThrow(UserNotFoundException::new);
+        User user9 = userRepository.findByEmail("99").orElseThrow(UserNotFoundException::new);
+        User user10 = userRepository.findByEmail("1010").orElseThrow(UserNotFoundException::new);
+        List<String>user1c=new ArrayList<>();
+        user1c.add("미국");
+        user1c.add("프랑스");
+        List<String>user1l=new ArrayList<>();
+        user1l.add("jp");
+        user1l.add("en");
+        List<String>user1h=new ArrayList<>();
+        user1h.add("fr");
+        UserUpdateDto userUpdateDto=new UserUpdateDto(user1c,user1l,user1h,"",
+                "facebook","insta","https://" + "d3t4l8y7wi01lo.cloudfront.net" + "/" + "defaultImage_233500392.png","한국","ko","en");
+
+
+        List<String>user2c=new ArrayList<>();
+        user2c.add("미국");
+        user2c.add("프랑스");
+        List<String>user2l=new ArrayList<>();
+        user2l.add("en");
+        List<String>user2h=new ArrayList<>();
+        user2h.add("jp");
+        UserUpdateDto userUpdateDto2=new UserUpdateDto(user2c,user2l,user2h,"",
+                "facebook","insta","https://" + "d3t4l8y7wi01lo.cloudfront.net" + "/" + "defaultImage_233500392.png","한국","ko","en");
+
+
+
+        userService.userProfileUpdate(userUpdateDto, user1.getId());
+        userService.userProfileUpdate(userUpdateDto, user2.getId());
+        userService.userProfileUpdate(userUpdateDto, user3.getId());
+        userService.userProfileUpdate(userUpdateDto, user4.getId());
+        userService.userProfileUpdate(userUpdateDto, user5.getId());
+        userService.userProfileUpdate(userUpdateDto, user6.getId());
+        userService.userProfileUpdate(userUpdateDto, user7.getId());
+        userService.userProfileUpdate(userUpdateDto2, user8.getId());
+        userService.userProfileUpdate(userUpdateDto2, user9.getId());
+        userService.userProfileUpdate(userUpdateDto2, user10.getId());
+       
+       //when
+        List<UserLanguageDto> popularHopeLanguage = userService.getPopularHopeLanguage();
+
+        //then
+        assertThat(popularHopeLanguage.get(0).getLanguage()).isEqualTo("en");
+        assertThat(popularHopeLanguage.get(0).getCount()).isEqualTo(10);
+
+        assertThat(popularHopeLanguage.get(1).getLanguage()).isEqualTo("fr");
+        assertThat(popularHopeLanguage.get(1).getCount()).isEqualTo(7);
+
+        assertThat(popularHopeLanguage.get(2).getLanguage()).isEqualTo("jp");
+        assertThat(popularHopeLanguage.get(2).getCount()).isEqualTo(3);
+    }
+    /**
+     * 학교별 회원순위**/
+    
+    @Test
+    public void getUserCountBySchool()throws Exception{
+       //given
+        User user1 = User.createUser("111", "11", "11", "11", "11", "국민대학교", "11");
+        User user2 = User.createUser("222", "22", "22", "22", "22", "국민대학교", "22");
+        User user3 = User.createUser("333", "33", "33", "33", "33", "국민대학교", "33");
+        User user4 = User.createUser("444", "44", "44", "44", "44", "국민대학교", "44");
+        User user5 = User.createUser("555", "55", "55", "55", "55", "국민대학교", "55");
+        User user6 = User.createUser("666", "66", "66", "66", "66", "국민대학교", "66");
+
+        em.persist(user1);
+        em.persist(user2);
+        em.persist(user3);
+        em.persist(user4);
+        em.persist(user5);
+        em.persist(user6);
+        em.flush(); em.clear();
+       //when
+        List<UserCountBySchoolDto> userCountBySchool = userService.getUserCountBySchool();
+        //then
+        assertThat(userCountBySchool.get(0).getSchool()).isEqualTo("서울시립대학교");
+        assertThat(userCountBySchool.get(0).getCount()).isEqualTo(10);
+        assertThat(userCountBySchool.get(1).getSchool()).isEqualTo("국민대학교");
+        assertThat(userCountBySchool.get(1).getCount()).isEqualTo(6);
+
+
+
+    }
 }
