@@ -1,11 +1,14 @@
 package com.project.chawchaw.config.logging;
 
+import com.project.chawchaw.dto.elasticSearch.PopularHopeLanguage;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.annotation.Pointcut;
 import org.json.simple.JSONObject;
+import org.springframework.data.elasticsearch.repository.ElasticsearchRepository;
 import org.springframework.stereotype.Component;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
@@ -19,7 +22,9 @@ import java.util.Map;
 @Component
 @Aspect
 @Slf4j
+@RequiredArgsConstructor
 public class LoggerAspect {
+    private final ElasticsearchRepository elasticsearchRepository;
     @Pointcut("execution(* com.project.chawchaw.controller.UserController.users(..))") // 이런 패턴이 실행될 경우 수행
     public void loggerPointCut() {
     }
@@ -34,16 +39,21 @@ public class LoggerAspect {
             String methodName = proceedingJoinPoint.getSignature().getName();
 
             Map<String, Object> params = new HashMap<>();
+            JSONObject params1 = getParams(request);
 
             try {
                 params.put("controller", controllerName);
                 params.put("method", methodName);
-                params.put("params", getParams(request));
+                params.put("params", params1);
                 params.put("log_time",  LocalDateTime.now().withNano(0));
                 params.put("request_uri", request.getRequestURI());
                 params.put("http_method", request.getMethod());
             } catch (Exception e) {
                 log.error("LoggerAspect error", e);
+            }
+
+            if(params1.get("hopeLanguage")!=null){
+//                elasticsearchRepository.save(PopularHopeLanguage.createPopularHopeLanguage())
             }
             log.info("params : {}", params); // param에 담긴 정보들을 한번에 로깅한다.
 

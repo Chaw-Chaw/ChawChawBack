@@ -105,3 +105,7 @@ cloud:
       static: ap-northeast-2
     stack:
       auto: false
+
+elasticsearch:
+  host: 127.0.0.1
+  port: 9200
