@@ -16,6 +16,12 @@ public class UserUpdateByAdminDto {
     private Long userId;
 
     @NotNull
+    private List<String> country;
+    @NotNull
+    private List<String> language;
+    @NotNull
+    private List<String> hopeLanguage;
+    @NotNull
     @Length(max = 2000)
     private String content;
     @NotNull
@@ -24,6 +30,16 @@ public class UserUpdateByAdminDto {
     @NotNull
     @Length(max = 255)
     private String instagramUrl;
+
     private String imageUrl;
+    @NotBlank
+    @Length(max = 255)
+    private String repCountry;
+    @NotBlank
+    @Length(max = 2)
+    private String repLanguage;
+    @NotBlank
+    @Length(max = 2)
+    private String repHopeLanguage;
 
 }

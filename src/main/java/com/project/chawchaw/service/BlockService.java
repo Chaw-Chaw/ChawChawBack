@@ -1,5 +1,6 @@
 package com.project.chawchaw.service;
 
+import com.project.chawchaw.dto.block.BlockUserDto;
 import com.project.chawchaw.dto.user.UsersDto;
 import com.project.chawchaw.entity.Block;
 import com.project.chawchaw.entity.Like;
@@ -54,9 +55,9 @@ public class BlockService {
 
     /**
      * 차단 유저 목록 조회**/
-    public List<UsersDto> getBlockList(Long userId){
+    public List<BlockUserDto> getBlockList(Long userId){
         User user = userRepository.findById(userId).orElseThrow(UserNotFoundException::new);
-        return user.getBlockList().stream().map(b->new UsersDto(b.getToUser().getId(), b.getToUser().getName(),b.getToUser().getImageUrl() )).collect(Collectors.toList());
+        return user.getBlockList().stream().map(b->new BlockUserDto(b.getToUser())).collect(Collectors.toList());
 
     }
 

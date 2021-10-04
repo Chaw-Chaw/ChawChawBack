@@ -348,7 +348,17 @@ class UserServiceTest {
         User user = userRepository.findByEmail("11").orElseThrow(UserNotFoundException::new);
 
         //when
-        UserUpdateByAdminDto userUpdateByAdminDto=new UserUpdateByAdminDto(user.getId(),"test","test","test","test");
+        List<String>user1c=new ArrayList<>();
+        user1c.add("미국");
+        user1c.add("프랑스");
+        List<String>user1l=new ArrayList<>();
+        user1l.add("jp");
+        user1l.add("en");
+        List<String>user1h=new ArrayList<>();
+        user1h.add("fr");
+        UserUpdateByAdminDto userUpdateByAdminDto=new UserUpdateByAdminDto(user.getId(),user1c,user1l,user1h,"",
+                "facebook","insta","https://" + "d3t4l8y7wi01lo.cloudfront.net" + "/" + "defaultImage_233500392.png","한국","ko","en");
+
         userService.updateUserByAdmin(userUpdateByAdminDto);
        em.flush();em.clear();
         User user1 = userRepository.findById(user.getId()).orElseThrow(UserNotFoundException::new);

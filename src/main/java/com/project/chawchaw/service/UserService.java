@@ -4,6 +4,7 @@ import com.project.chawchaw.dto.UserLanguageDto;
 import com.project.chawchaw.dto.admin.AdminUserSearch;
 import com.project.chawchaw.dto.admin.UserUpdateByAdminDto;
 import com.project.chawchaw.dto.admin.UsersByAdminDto;
+import com.project.chawchaw.dto.block.BlockUserDto;
 import com.project.chawchaw.dto.user.*;
 import com.project.chawchaw.entity.*;
 import com.project.chawchaw.exception.*;
@@ -21,6 +22,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.io.File;
 import java.net.URLDecoder;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -340,19 +342,78 @@ public class UserService {
     }
 
     @Transactional
-    public void updateUserByAdmin(UserUpdateByAdminDto userUpdateByAdminDto){
+    public Boolean updateUserByAdmin(UserUpdateByAdminDto updateDto){
 
-        User user = userRepository.findById(userUpdateByAdminDto.getUserId()).orElseThrow(UserNotFoundException::new);
+        User user = userRepository.findById(updateDto.getUserId()).orElseThrow(UserNotFoundException::new);
 
-        user.changeImageUrl(userUpdateByAdminDto.getImageUrl());
-        user.changeInstagramUrl(userUpdateByAdminDto.getInstagramUrl());
-        user.changeFaceBookUrl(userUpdateByAdminDto.getFacebookUrl());
-        user.changeContent(userUpdateByAdminDto.getContent());
+        if(updateDto.getRepHopeLanguage()!=null&&updateDto.getRepLanguage()!=null&&updateDto.getRepCountry()!=null) {
 
+            if (updateDto.getCountry()!=null) {
+                userCountryRepository.deleteByUserId(updateDto.getUserId());
+
+                for (int i = 0; i < updateDto.getCountry().size(); i++) {
+                    Country country = countryRepository.findByName(updateDto.getCountry().get(i)).orElseThrow(CountryNotFoundException::new);
+                    UserCountry userCountry = UserCountry.createUserCountry(country);
+                    userCountry.addUser(user);
+
+                }
+
+            }
+            if (updateDto.getLanguage()!=null) {
+                userLanguageRepository.deleteByUserId(updateDto.getUserId());
+                for (int i = 0; i < updateDto.getLanguage().size(); i++) {
+                    Language language = languageRepository.findByAbbr(updateDto.getLanguage().get(i)).orElseThrow(LanguageNotFoundException::new);
+                    UserLanguage userLanguage = UserLanguage.createUserLanguage(language);
+                    userLanguage.addUser(user);
+
+                }
+            }
+
+            if (updateDto.getHopeLanguage()!=null) {
+                userHopeLanguageRepository.deleteByUserId(updateDto.getUserId());
+                for (int i = 0; i < updateDto.getHopeLanguage().size(); i++) {
+                    Language language = languageRepository.findByAbbr(updateDto.getHopeLanguage().get(i)).orElseThrow(LanguageNotFoundException::new);
+                    UserHopeLanguage userHopeLanguage = UserHopeLanguage.createUserHopeLanguage(language);
+                    userHopeLanguage.addUser(user);
+
+                }
+            }
+
+            Country repCountry = countryRepository.findByName(updateDto.getRepCountry()).orElseThrow(CountryNotFoundException::new);
+            Language repLanguage = languageRepository.findByAbbr(updateDto.getRepLanguage()).orElseThrow(LanguageNotFoundException::new);
+            Language repHopeLanguage = languageRepository.findByAbbr(updateDto.getRepHopeLanguage()).orElseThrow(LanguageNotFoundException::new);
+
+            UserHopeLanguage userRepHopeLanguage = UserHopeLanguage.createUserHopeLanguage(repHopeLanguage);
+            userRepHopeLanguage.changeRep();
+            userRepHopeLanguage.addUser(user);
+            UserLanguage userRepLanguage = UserLanguage.createUserLanguage(repLanguage);
+            userRepLanguage.changeRep();
+            userRepLanguage.addUser(user);
+            UserCountry userRepCountry = UserCountry.createUserCountry(repCountry);
+            userRepCountry.changeRep();
+            userRepCountry.addUser(user);
+
+            user.changeRep(repCountry.getName(), repLanguage.getAbbr(), repHopeLanguage.getAbbr());
+
+            user.changeImageUrl(updateDto.getImageUrl());
+            user.changeInstagramUrl(updateDto.getInstagramUrl());
+            user.changeFaceBookUrl(updateDto.getFacebookUrl());
+            user.changeContent(updateDto.getContent());
+            if (user.getRole().equals(ROLE.GUEST)) {
+                user.changeRole();
+            }
+            return true;
+        }
+        else{
+            return false;
+        }
     }
-    public UserDto detailUserByAdmin(Long toUserId) {
+
+    public UserByAdminDto detailUserByAdmin(Long toUserId) {
         User toUser = userRepository.findById(toUserId).orElseThrow(UserNotFoundException::new);
-        return  new UserDto(toUser);
+        UserByAdminDto userByAdminDto = new UserByAdminDto(toUser);
+        userByAdminDto.setBlockUsers(toUser.getBlockList().stream().map(b->new BlockUserDto(b.getToUser())).collect(Collectors.toList()));
+        return userByAdminDto;
     }
     /**
      * 회원탈퇴시

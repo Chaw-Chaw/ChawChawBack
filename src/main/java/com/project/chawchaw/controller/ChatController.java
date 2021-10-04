@@ -98,13 +98,13 @@ public class ChatController {
                 true,chatService.getChat(userId)), HttpStatus.OK);
     }
 
-    @DeleteMapping("/chat/room/{roomId}")
+    @DeleteMapping("/chat/room")
     @ResponseBody
-    public ResponseEntity deleteChatRoom(@PathVariable("roomId") Long roomId,@RequestHeader("Authorization") String token) {
+    public ResponseEntity deleteChatRoom(@RequestBody ChatRoomDto chatRoomDto,@RequestHeader("Authorization") String token) {
 
         Long userId = Long.valueOf(jwtTokenProvider.getUserPk(token));
 
-        if(chatService.deleteChatRoom(roomId,userId))s3Service.deleteChatImage(chatMessageRepository.getImageByRoomId(roomId));
+        if(chatService.deleteChatRoom(chatRoomDto.getRoomId(),userId))s3Service.deleteChatImage(chatMessageRepository.getImageByRoomId(chatRoomDto.getRoomId()));
 
         return new ResponseEntity(DefaultResponseVo.res(ResponseMessage.CHATROOM_DELETE_SUCCESS,
                 true), HttpStatus.OK);

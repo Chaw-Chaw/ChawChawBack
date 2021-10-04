@@ -30,7 +30,7 @@ public class LikeController {
         return new ResponseEntity(DefaultResponseVo.res(ResponseMessage.LIKE_SUCCESS,true),HttpStatus.CREATED);
 
     }
-    @DeleteMapping("like")
+    @DeleteMapping("/like")
     public ResponseEntity unLike(@RequestBody UserRequestDto userRequestDto,@RequestHeader(value="Authorization")String token){
         Long fromUserId = Long.valueOf(jwtTokenProvider.getUserPk(token));
         likeService.unLike(userRequestDto.getUserId(),fromUserId);
