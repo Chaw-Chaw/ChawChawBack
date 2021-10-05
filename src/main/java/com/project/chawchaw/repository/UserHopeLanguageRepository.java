@@ -1,6 +1,6 @@
 package com.project.chawchaw.repository;
 
-import com.project.chawchaw.dto.UserLanguageDto;
+import com.project.chawchaw.dto.user.UserHopeLanguageDto;
 import com.project.chawchaw.entity.UserHopeLanguage;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
@@ -23,8 +23,8 @@ public interface UserHopeLanguageRepository extends JpaRepository<UserHopeLangua
     @Query("delete from UserHopeLanguage uhl where uhl.user.id=:userId")
     int deleteByUserId(@Param("userId")Long userId);
 
-    @Query("select new com.project.chawchaw.dto.UserLanguageDto(uhl.hopeLanguage.abbr,count(uhl.hopeLanguage)) " +
+    @Query("select new com.project.chawchaw.dto.user.UserLanguageDto(uhl.hopeLanguage.abbr,count(uhl.hopeLanguage)) " +
             "from UserHopeLanguage uhl group by uhl.hopeLanguage " +
             "order by count (uhl.hopeLanguage) desc ")
-    List<UserLanguageDto>getPopularHopeLanguage();
+    List<UserHopeLanguageDto>getPopularHopeLanguage();
 }

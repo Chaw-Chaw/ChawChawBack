@@ -1,6 +1,6 @@
 package com.project.chawchaw.service;
 
-import com.project.chawchaw.dto.UserLanguageDto;
+import com.project.chawchaw.dto.user.UserHopeLanguageDto;
 import com.project.chawchaw.dto.admin.AdminUserSearch;
 import com.project.chawchaw.dto.admin.UserUpdateByAdminDto;
 import com.project.chawchaw.dto.admin.UsersByAdminDto;
@@ -440,7 +440,7 @@ public class UserService {
 
     /**
      * 모든학교 포함 hopeLanguage**/
-    public List<UserLanguageDto> getPopularHopeLanguage(){
+    public List<UserHopeLanguageDto> getPopularHopeLanguage(){
 
         return userHopeLanguageRepository.getPopularHopeLanguage();
     }

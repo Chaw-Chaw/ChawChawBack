@@ -1,4 +1,4 @@
-package com.project.chawchaw.dto;
+package com.project.chawchaw.dto.user;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -9,9 +9,9 @@ import lombok.Setter;
 @Setter
 @AllArgsConstructor
 @NoArgsConstructor
-public class UserLanguageDto {
+public class UserHopeLanguageDto {
 
-    private String language;
-    private Long count;
+    private String hopeLanguageName;
+    private Long hopeLanguageCnt;
 }
 

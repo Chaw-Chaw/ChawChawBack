@@ -1,6 +1,7 @@
 package com.project.chawchaw.repository;
 
-import com.project.chawchaw.dto.UserLanguageDto;
+import com.project.chawchaw.dto.user.UserHopeLanguageDto;
+import com.project.chawchaw.dto.user.UserLanguageDto;
 import com.project.chawchaw.entity.UserLanguage;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
@@ -24,7 +25,7 @@ public interface UserLanguageRepository extends JpaRepository<UserLanguage,Long>
 
     /**
      * 모든학교 포함**/
-    @Query("select new com.project.chawchaw.dto.UserLanguageDto(ul.language.abbr,count(ul.language)) " +
+    @Query("select new com.project.chawchaw.dto.user.UserLanguageDto(ul.language.abbr,count(ul.language)) " +
             "from UserLanguage ul group by ul.language order by count (ul.language) desc ")
     List<UserLanguageDto>getPopularLanguage();
 

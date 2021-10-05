@@ -1,6 +1,6 @@
 package com.project.chawchaw.service;
 
-import com.project.chawchaw.dto.UserLanguageDto;
+import com.project.chawchaw.dto.user.UserHopeLanguageDto;
 import com.project.chawchaw.dto.admin.AdminUserSearch;
 import com.project.chawchaw.dto.admin.UserUpdateByAdminDto;
 import com.project.chawchaw.dto.admin.UsersByAdminDto;
@@ -492,7 +492,7 @@ class UserServiceTest {
         userService.userProfileUpdate(userUpdateDto2, user10.getId());
        
        //when
-        List<UserLanguageDto> popularHopeLanguage = userService.getPopularHopeLanguage();
+        List<UserHopeLanguageDto> popularHopeLanguage = userService.getPopularHopeLanguage();
 
         //then
         assertThat(popularHopeLanguage.get(0).getLanguage()).isEqualTo("en");
