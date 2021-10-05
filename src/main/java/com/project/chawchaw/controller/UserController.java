@@ -248,7 +248,6 @@ public class UserController {
     public ResponseEntity getUserCountBySchool() {
         return new ResponseEntity(DefaultResponseVo.res(ResponseMessage.FIND_POPULAR_LANGUAGE_SUCCESS,
                 true,userService.getUserCountBySchool()), HttpStatus.OK);
-
     }
 
     @GetMapping("/users/popular/hopeLanguage")
