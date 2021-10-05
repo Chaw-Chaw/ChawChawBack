@@ -246,6 +246,7 @@ public class UserController {
 
     @GetMapping("/users/popular/school")
     public ResponseEntity getUserCountBySchool() {
+        
         return new ResponseEntity(DefaultResponseVo.res(ResponseMessage.FIND_POPULAR_LANGUAGE_SUCCESS,
                 true,userService.getUserCountBySchool()), HttpStatus.OK);
     }
