@@ -17,7 +17,7 @@ public class UsersDto {
     private String name;
     private String imageUrl;
     private String content;
-    private String days;
+    private String regDate;
     private Long view;
     private Long likes;
     private String repCountry;

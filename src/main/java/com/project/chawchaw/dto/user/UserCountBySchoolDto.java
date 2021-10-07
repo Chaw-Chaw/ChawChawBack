@@ -11,5 +11,5 @@ import lombok.Setter;
 @NoArgsConstructor
 public class UserCountBySchoolDto {
     private String schoolName;
-    private Long schoolCnt;
+    private Long userCnt;
 }

@@ -29,7 +29,7 @@ public class UserByAdminDto {
     private Long views;
     private Long likes;
     private Boolean isLike;
-    private String days;
+    private String regDate;
     private List<BlockUserDto>blockUsers;
 
     public UserByAdminDto(User user){
@@ -65,7 +65,7 @@ public class UserByAdminDto {
         this.hopeLanguage=hopeLanguage;
         this.language=language;
 
-        this.days=user.getRegDate().toString();
+        this.regDate=user.getRegDate().toString();
 
     }
 }

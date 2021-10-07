@@ -244,21 +244,21 @@ public class UserController {
      * 통계
      * **/
 
-    @GetMapping("/users/popular/school")
+    @GetMapping("/users/rank/school")
     public ResponseEntity getUserCountBySchool() {
-        
+
         return new ResponseEntity(DefaultResponseVo.res(ResponseMessage.FIND_POPULAR_LANGUAGE_SUCCESS,
                 true,userService.getUserCountBySchool()), HttpStatus.OK);
     }
 
-    @GetMapping("/users/popular/hopeLanguage")
+    @GetMapping("/users/rank/hopeLanguage")
     public ResponseEntity getPopularHopeLanguage() {
 
         return new ResponseEntity(DefaultResponseVo.res(ResponseMessage.FIND_POPULAR_LANGUAGE_SUCCESS,
                 true,userService.getPopularHopeLanguage()), HttpStatus.OK);
 
     }
-    @GetMapping("/users/popular/language")
+    @GetMapping("/users/rank/language")
     public ResponseEntity getPopularLanguage() {
 
         return new ResponseEntity(DefaultResponseVo.res(ResponseMessage.FIND_POPULAR_SCHOOL_SUCCESS,

@@ -21,6 +21,6 @@ public class UsersByAdminDto {
     private String repHopeLanguage;
     private Long likes;
     private Long views;
-    private String days;
+    private String regDate;
 
 }
