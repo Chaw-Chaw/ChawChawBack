@@ -1,7 +1,13 @@
 package com.project.chawchaw.repository;
 
-import com.project.chawchaw.dto.elasticSearch.PopularHopeLanguage;
+import com.project.chawchaw.entity.document.PopularLanguage;
 import org.springframework.data.elasticsearch.repository.ElasticsearchRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.stereotype.Repository;
 
-public interface ElasticSearchRepository extends ElasticsearchRepository<PopularHopeLanguage ,String> {
+@Repository
+public interface ElasticSearchRepository extends ElasticsearchRepository<PopularLanguage,String> {
+
+
+
 }

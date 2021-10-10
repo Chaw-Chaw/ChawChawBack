@@ -1,6 +1,6 @@
 package com.project.chawchaw.config.logging;
 
-import com.project.chawchaw.dto.elasticSearch.PopularHopeLanguage;
+import com.project.chawchaw.entity.document.PopularLanguage;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.aspectj.lang.ProceedingJoinPoint;
@@ -52,8 +52,9 @@ public class LoggerAspect {
                 log.error("LoggerAspect error", e);
             }
 
-            if(params1.get("hopeLanguage")!=null){
-//                elasticsearchRepository.save(PopularHopeLanguage.createPopularHopeLanguage())
+            if(params1.get("language")!=null){
+                elasticsearchRepository.save(PopularLanguage.createPopularLanguage(params1.get("language").toString()));
+
             }
             log.info("params : {}", params); // param에 담긴 정보들을 한번에 로깅한다.
 

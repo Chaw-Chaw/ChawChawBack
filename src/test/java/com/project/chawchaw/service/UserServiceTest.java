@@ -495,14 +495,14 @@ class UserServiceTest {
         List<UserHopeLanguageDto> popularHopeLanguage = userService.getPopularHopeLanguage();
 
         //then
-        assertThat(popularHopeLanguage.get(0).getLanguage()).isEqualTo("en");
-        assertThat(popularHopeLanguage.get(0).getCount()).isEqualTo(10);
+        assertThat(popularHopeLanguage.get(0).getHopeLanguageName()).isEqualTo("en");
+        assertThat(popularHopeLanguage.get(0).getHopeLanguageCnt()).isEqualTo(10);
 
-        assertThat(popularHopeLanguage.get(1).getLanguage()).isEqualTo("fr");
-        assertThat(popularHopeLanguage.get(1).getCount()).isEqualTo(7);
+        assertThat(popularHopeLanguage.get(1).getHopeLanguageName()).isEqualTo("fr");
+        assertThat(popularHopeLanguage.get(1).getHopeLanguageCnt()).isEqualTo(7);
 
-        assertThat(popularHopeLanguage.get(2).getLanguage()).isEqualTo("jp");
-        assertThat(popularHopeLanguage.get(2).getCount()).isEqualTo(3);
+        assertThat(popularHopeLanguage.get(2).getHopeLanguageName()).isEqualTo("jp");
+        assertThat(popularHopeLanguage.get(2).getHopeLanguageCnt()).isEqualTo(3);
     }
     /**
      * 학교별 회원순위**/
@@ -527,10 +527,10 @@ class UserServiceTest {
        //when
         List<UserCountBySchoolDto> userCountBySchool = userService.getUserCountBySchool();
         //then
-        assertThat(userCountBySchool.get(0).getSchool()).isEqualTo("서울시립대학교");
-        assertThat(userCountBySchool.get(0).getCount()).isEqualTo(10);
-        assertThat(userCountBySchool.get(1).getSchool()).isEqualTo("국민대학교");
-        assertThat(userCountBySchool.get(1).getCount()).isEqualTo(6);
+        assertThat(userCountBySchool.get(0).getSchoolName()).isEqualTo("서울시립대학교");
+        assertThat(userCountBySchool.get(0).getUserCnt()).isEqualTo(10);
+        assertThat(userCountBySchool.get(1).getSchoolName()).isEqualTo("국민대학교");
+        assertThat(userCountBySchool.get(1).getUserCnt()).isEqualTo(6);
 
 
 
