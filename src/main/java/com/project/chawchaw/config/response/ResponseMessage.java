@@ -44,6 +44,12 @@ public class ResponseMessage {
     public static final String ALARM_FIND_SUCCESS="알림 조회에 성공했습니다.";
     public static final String MOVE_CHATROOM_SUCCESS="방 이동에 성공했습니다";
     public static final String MOVE_CHATROOM_FAIL="방 이동에 실패했습니다";
+    
+    /**
+     * 통계
+     * **/
+    public static final String FIND_POPULAR_LANGUAGE_SUCCESS="언어 희망 순위 조회에 성공했습니다.";
+    public static final String FIND_POPULAR_SCHOOL_SUCCESS="학교별 이용자 순위 조회에 성공했습니다.";
 
 
     /**

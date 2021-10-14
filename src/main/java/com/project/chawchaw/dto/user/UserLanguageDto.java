@@ -9,7 +9,7 @@ import lombok.Setter;
 @Setter
 @AllArgsConstructor
 @NoArgsConstructor
-public class UserCountBySchoolDto {
-    private String schoolName;
-    private Long userCnt;
+public class UserLanguageDto {
+    private String languageName;
+    private Long languageCnt;
 }

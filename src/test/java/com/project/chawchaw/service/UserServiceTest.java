@@ -1,6 +1,6 @@
 package com.project.chawchaw.service;
 
-import com.project.chawchaw.dto.UserLanguageDto;
+import com.project.chawchaw.dto.user.UserHopeLanguageDto;
 import com.project.chawchaw.dto.admin.AdminUserSearch;
 import com.project.chawchaw.dto.admin.UserUpdateByAdminDto;
 import com.project.chawchaw.dto.admin.UsersByAdminDto;
@@ -348,7 +348,17 @@ class UserServiceTest {
         User user = userRepository.findByEmail("11").orElseThrow(UserNotFoundException::new);
 
         //when
-        UserUpdateByAdminDto userUpdateByAdminDto=new UserUpdateByAdminDto(user.getId(),"test","test","test","test");
+        List<String>user1c=new ArrayList<>();
+        user1c.add("미국");
+        user1c.add("프랑스");
+        List<String>user1l=new ArrayList<>();
+        user1l.add("jp");
+        user1l.add("en");
+        List<String>user1h=new ArrayList<>();
+        user1h.add("fr");
+        UserUpdateByAdminDto userUpdateByAdminDto=new UserUpdateByAdminDto(user.getId(),user1c,user1l,user1h,"",
+                "facebook","insta","https://" + "d3t4l8y7wi01lo.cloudfront.net" + "/" + "defaultImage_233500392.png","한국","ko","en");
+
         userService.updateUserByAdmin(userUpdateByAdminDto);
        em.flush();em.clear();
         User user1 = userRepository.findById(user.getId()).orElseThrow(UserNotFoundException::new);
@@ -482,17 +492,17 @@ class UserServiceTest {
         userService.userProfileUpdate(userUpdateDto2, user10.getId());
        
        //when
-        List<UserLanguageDto> popularHopeLanguage = userService.getPopularHopeLanguage();
+        List<UserHopeLanguageDto> popularHopeLanguage = userService.getPopularHopeLanguage();
 
         //then
-        assertThat(popularHopeLanguage.get(0).getLanguage()).isEqualTo("en");
-        assertThat(popularHopeLanguage.get(0).getCount()).isEqualTo(10);
+        assertThat(popularHopeLanguage.get(0).getHopeLanguageName()).isEqualTo("en");
+        assertThat(popularHopeLanguage.get(0).getHopeLanguageCnt()).isEqualTo(10);
 
-        assertThat(popularHopeLanguage.get(1).getLanguage()).isEqualTo("fr");
-        assertThat(popularHopeLanguage.get(1).getCount()).isEqualTo(7);
+        assertThat(popularHopeLanguage.get(1).getHopeLanguageName()).isEqualTo("fr");
+        assertThat(popularHopeLanguage.get(1).getHopeLanguageCnt()).isEqualTo(7);
 
-        assertThat(popularHopeLanguage.get(2).getLanguage()).isEqualTo("jp");
-        assertThat(popularHopeLanguage.get(2).getCount()).isEqualTo(3);
+        assertThat(popularHopeLanguage.get(2).getHopeLanguageName()).isEqualTo("jp");
+        assertThat(popularHopeLanguage.get(2).getHopeLanguageCnt()).isEqualTo(3);
     }
     /**
      * 학교별 회원순위**/
@@ -517,10 +527,10 @@ class UserServiceTest {
        //when
         List<UserCountBySchoolDto> userCountBySchool = userService.getUserCountBySchool();
         //then
-        assertThat(userCountBySchool.get(0).getSchool()).isEqualTo("서울시립대학교");
-        assertThat(userCountBySchool.get(0).getCount()).isEqualTo(10);
-        assertThat(userCountBySchool.get(1).getSchool()).isEqualTo("국민대학교");
-        assertThat(userCountBySchool.get(1).getCount()).isEqualTo(6);
+        assertThat(userCountBySchool.get(0).getSchoolName()).isEqualTo("서울시립대학교");
+        assertThat(userCountBySchool.get(0).getUserCnt()).isEqualTo(10);
+        assertThat(userCountBySchool.get(1).getSchoolName()).isEqualTo("국민대학교");
+        assertThat(userCountBySchool.get(1).getUserCnt()).isEqualTo(6);
 
 
 

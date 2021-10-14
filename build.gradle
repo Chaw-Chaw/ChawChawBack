@@ -22,6 +22,7 @@ configurations {
 	}
 }
 
+
 repositories {
 	mavenCentral()
 }
@@ -78,6 +79,8 @@ dependencies {
 	//slack 실시간 log
 	implementation 'com.github.maricn:logback-slack-appender:1.4.0'
 
+	//log설정
+	implementation group: 'net.logstash.logback', name: 'logstash-logback-encoder', version: '4.11'
 
 	//mysql
 	implementation group: 'mysql', name: 'mysql-connector-java', version: '8.0.21'
@@ -88,6 +91,12 @@ dependencies {
 
 	//h2
 	testImplementation group: 'com.h2database', name: 'h2', version: '1.4.199'
+
+	//es
+	implementation 'org.springframework.boot:spring-boot-starter-data-elasticsearch'
+//	implementation 'org.elasticsearch.client:elasticsearch-rest-high-level-client:7.9.1'
+//	implementation 'org.elasticsearch.client:elasticsearch-rest-client:7.9.3'
+//	implementation 'org.elasticsearch:elasticsearch:7.9.3'
 
 
 	//aws s3
@@ -106,6 +115,7 @@ dependencies {
 test {
 	useJUnitPlatform()
 }
+
 ////querydsl 추가 시작
 //def querydslDir = "$buildDir/generated/querydsl"
 //querydsl {

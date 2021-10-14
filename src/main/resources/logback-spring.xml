@@ -35,4 +35,46 @@
         <appender-ref ref="Console" />
         <appender-ref ref="ASYNC_SLACK"/>
     </root>
+
+<!--경로설정-->
+<!--    <property name="LOG_DIR" value="C:/Users/kim/Desktop/log"></property>-->
+<!--    <property name="LOG_PREFIX" value="flightreservation"></property>-->
+
+<!--    <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">-->
+<!--        <file>${LOG_DIR}/${LOG_PREFIX}.log</file>-->
+<!--        <encoder class="ch.qos.logback.classic.encoder.PatternLayoutEncoder">-->
+<!--            <Pattern>%d{yyyy-MM-dd HH:mm:ss}- %-5level - %msg%n</Pattern>-->
+<!--        </encoder>-->
+
+<!--        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">-->
+<!--            <fileNamePattern>${LOG_DIR}/archived/${LOG_PREFIX}.%d{yyyy-MM-dd}.%i.log</fileNamePattern>-->
+<!--            <timeBasedFileNamingAndTriggeringPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedFNATP">-->
+<!--                <maxFileSize>10MB</maxFileSize>-->
+<!--            </timeBasedFileNamingAndTriggeringPolicy>-->
+<!--        </rollingPolicy>-->
+<!--    </appender>-->
+
+<!--    <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">-->
+<!--        &lt;!&ndash; encoders are assigned the type-->
+<!--             ch.qos.logback.classic.encoder.PatternLayoutEncoder by default &ndash;&gt;-->
+<!--        <encoder>-->
+<!--            <pattern>%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n</pattern>-->
+<!--        </encoder>-->
+<!--    </appender>-->
+
+<!--    <root level="info">-->
+<!--        <appender-ref ref="FILE"></appender-ref>-->
+<!--        <appender-ref ref="STDOUT"></appender-ref>-->
+<!--    </root>-->
+<!--&lt;!&ndash;   logstash &ndash;&gt;-->
+
+<!--    <appender name="LOGSTASH" class="net.logstash.logback.appender.LogstashTcpSocketAppender">-->
+<!--        <destination>127.0.0.1:4560</destination>-->
+<!--        <encoder class="net.logstash.logback.encoder.LogstashEncoder"></encoder>-->
+<!--    </appender>-->
+
+<!--    <root>-->
+<!--        <level value="INFO"/>-->
+<!--        <appender-ref ref="LOGSTASH"/>-->
+<!--    </root>-->
 </configuration>
