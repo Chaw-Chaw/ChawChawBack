@@ -70,19 +70,6 @@ file:
   defaultImage: ENC(XlhuSnt0n6mUWfotvHMPxOwBz0L3dCPgOwYoZiIq59ee8/mYmN/T1w==)
 
 
-logging:
-  level:
-      com:
-        amazonaws:
-          util:
-            EC2MetadataUtils: error
-
-  slack:
-    webhook-uri: ENC(jKuc2pvziEjdBE8ti6GTntX33NizxRgsvfcW1sn1PNm2A57v00jxNIFUpANuSPMe7om/IgiXlWa5bczqNdLa3mDhn8pRimWL9AGttueHmLebmXMBX1lIaN2BYmHn1ntA)
-  config: classpath:logback-spring.xml
-
-
-
 
   mvc:
     view:

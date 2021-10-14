@@ -46,9 +46,8 @@ public class StompConfig implements ChannelInterceptor {
             String token = accessor.getFirstNativeHeader("Authorization");
 
             if (hasText(token) && token.startsWith("Bearer")) {
-                token=token.replace("Bearer ","");
-            }
-            else{
+                token = token.replace("Bearer ", "");
+            } else {
 
                 return null;
             }
@@ -66,8 +65,8 @@ public class StompConfig implements ChannelInterceptor {
 //            chatMessageRepository.createRoomSession(user.getEmail());
 
 
-
         }
+        System.out.println("메시지 보내");
 //
 //        else if(StompCommand.DISCONNECT == accessor.getCommand()){
 //            if (accessor.getUser()!=null){

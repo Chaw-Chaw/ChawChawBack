@@ -5,19 +5,25 @@ import com.project.chawchaw.dto.chat.ChatMessageDto;
 
 import com.project.chawchaw.dto.chat.ChatRoomDto;
 import com.project.chawchaw.dto.chat.MessageType;
+import com.project.chawchaw.entity.Block;
 import com.project.chawchaw.entity.ChatRoom;
 import com.project.chawchaw.entity.ChatRoomUser;
 import com.project.chawchaw.entity.User;
 import com.project.chawchaw.exception.ChatRoomNotFoundException;
 import com.project.chawchaw.exception.UserNotFoundException;
+import com.project.chawchaw.repository.BlockRepository;
 import com.project.chawchaw.repository.chat.ChatMessageRepository;
 import com.project.chawchaw.repository.chat.ChatRoomRepository;
 import com.project.chawchaw.repository.chat.ChatRoomUserRepository;
 import com.project.chawchaw.repository.user.UserRepository;
+import com.project.chawchaw.service.BlockService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.listener.ChannelTopic;
 import org.springframework.data.redis.listener.RedisMessageListenerContainer;
+import org.springframework.data.redis.listener.adapter.MessageListenerAdapter;
 import org.springframework.messaging.simp.SimpMessageSendingOperations;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -29,6 +35,7 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 @Service
 @Transactional(readOnly = true)
+@Configuration
 public class ChatService {
     private final RedisTemplate<String, Object> redisTemplate;
     private final ChatRoomRepository chatRoomRepository;
@@ -36,6 +43,7 @@ public class ChatService {
     private final UserRepository userRepository;
     private final ChatMessageRepository chatMessageRepository;
     private final SimpMessageSendingOperations messagingTemplate;
+    private final BlockRepository blockRepository;
 
     private final RedisMessageListenerContainer redisMessageListener;
     // 구독 처리 서비스
@@ -43,24 +51,36 @@ public class ChatService {
     // Redis
     private static final String CHAT_ROOMS = "CHAT_ROOM";
 
-    private Map<Long, ChannelTopic> topics=new HashMap<>();
+    private Map<Long, ChannelTopic> topics = new HashMap<>();
 
 
     @Transactional
     public void publish(ChannelTopic topic, ChatMessageDto message) {
 
+
         redisTemplate.convertAndSend(topic.getTopic(), message);
+        System.out.println(redisTemplate);
 //        chatMessageRepository.createChatMessage(message);
+    }
+
+
+    public void enterChatRoom(Long roomId) {
+        ChannelTopic topic = topics.get(roomId);
+        if (topic == null) {
+            topic = new ChannelTopic(String.valueOf(roomId));
+            redisMessageListener.addMessageListener(redisSubscriber, topic);
+            topics.put(roomId, topic);
+        }
     }
 
     //chatroom
     @Transactional
-    public ChatRoomDto createRoom(Long toUserId, Long fromUserId){
-        User toUser=userRepository.findById(toUserId).orElseThrow(UserNotFoundException::new);
-        User fromUser=userRepository.findById(fromUserId).orElseThrow(UserNotFoundException::new);
+    public ChatRoomDto createRoom(Long toUserId, Long fromUserId) {
+        User toUser = userRepository.findById(toUserId).orElseThrow(UserNotFoundException::new);
+        User fromUser = userRepository.findById(fromUserId).orElseThrow(UserNotFoundException::new);
         ChatRoom chatRoom = chatRoomRepository.save(ChatRoom.createChatRoom(UUID.randomUUID().toString()));
-        chatRoomUserRepository.save(ChatRoomUser.createChatRoomUser(chatRoom,toUser));
-        chatRoomUserRepository.save(ChatRoomUser.createChatRoomUser(chatRoom,fromUser));
+        chatRoomUserRepository.save(ChatRoomUser.createChatRoomUser(chatRoom, toUser));
+        chatRoomUserRepository.save(ChatRoomUser.createChatRoomUser(chatRoom, fromUser));
 //        ChatMessageDto chatMessageDto = new ChatMessageDto(MessageType.ENTER,chatRoom.getId(), fromUserId, fromUser.getName(), fromUser.getName() + "님이 입장하셨습니다.",fromUser.getImageUrl(), LocalDateTime.now().withNano(0),false);
 //        chatMessageRepository.createChatMessage(chatMessageDto);
 //        messagingTemplate.convertAndSend("/queue/chat/room/wait/" + toUserId,chatMessageDto );
@@ -69,7 +89,7 @@ public class ChatService {
 //        chatMessageRepository.createChatRoomUserIsExit(toUserId,false);
 //        chatMessageRepository.createChatRoomUserIsExit(fromUserId,false);
 
-          return new ChatRoomDto(chatRoom.getId(),chatRoom.getName());
+        return new ChatRoomDto(chatRoom.getId(), chatRoom.getName());
 
 //        ChatRoom chatRoom=null;
 ////        Optional<ChatRoomUser> findChatRoomUser = chatRoomUserRepository.findByToUserIdAndFromUserId(toUserId, fromUserId);
@@ -101,92 +121,99 @@ public class ChatService {
 //        return chatDtos;
 
     }
+
     @Transactional
-    public ChatRoomDto isChatRoom(Long fromUserId, Long toUserId){
+    public ChatRoomDto isChatRoom(Long fromUserId, Long toUserId) {
         Optional<ChatRoomUser> chatRoomUser = chatRoomUserRepository.isChatRoom(fromUserId, toUserId);
-        if(chatRoomUser.isPresent()){
+        if (chatRoomUser.isPresent()) {
             ChatRoomUser getChatRoomUser = chatRoomUser.get();
             chatRoomUser.get().changeIsExit(false);
             ChatRoom chatRoom = getChatRoomUser.getChatRoom();
 
-            return new ChatRoomDto(chatRoom.getId(),chatRoom.getName());
-        }
-        else{
+            return new ChatRoomDto(chatRoom.getId(), chatRoom.getName());
+        } else {
             return null;
         }
     }
 
-    public List<ChatMessageDto> getChatMessageByIsRead(Long id){
-        List<ChatMessageDto> chatMessageDto=new ArrayList<>();
+
+    //메세지 알림?
+    public List<ChatMessageDto> getChatMessageByIsRead(Long id) {
+        List<ChatMessageDto> chatMessageDto = new ArrayList<>();
 //        User user = userRepository.findById(id).orElseThrow(UserNotFoundException::new);
 
         List<ChatRoomUser> chatRoomUserByUserId = chatRoomUserRepository.findByChatRoomUserByUserId(id);
 
-        for(int i=0;i<chatRoomUserByUserId.size();i++){
+        for (int i = 0; i < chatRoomUserByUserId.size(); i++) {
             ChatRoomUser chatRoomUser1 = chatRoomUserByUserId.get(i);
             List<ChatRoomUser> chatRoomUserByRoomId = chatRoomUserRepository.findByRoomId(chatRoomUser1.getChatRoom().getId());
-            for(int j=0;j<chatRoomUserByRoomId.size();j++){
+            for (int j = 0; j < chatRoomUserByRoomId.size(); j++) {
                 ChatRoomUser chatRoomUser2 = chatRoomUserByRoomId.get(j);
-                if(chatRoomUser2.getUser().getId().equals(id)){
-                    chatMessageRepository.findChatMessageByRoomId(chatRoomUser2.getChatRoom().getId(),chatRoomUser2.getExitDate()).stream().forEach(
-                            c->{
-                                if(!c.getIsRead())chatMessageDto.add(c);
+                if (chatRoomUser2.getUser().getId().equals(id)) {
+                    chatMessageRepository.findChatMessageByRoomId(chatRoomUser2.getChatRoom().getId(), chatRoomUser2.getExitDate()).stream().forEach(
+                            c -> {
+                                if (!c.getIsRead()) chatMessageDto.add(c);
                             }
                     );
                 }
             }
         }
-        Collections.sort(chatMessageDto, (c1, c2)-> {
+        Collections.sort(chatMessageDto, (c1, c2) -> {
 
-            return  c2.getRegDate().compareTo(c1.getRegDate());
+            return c2.getRegDate().compareTo(c1.getRegDate());
         });
         return chatMessageDto;
 
 
     }
 
-    public List<ChatDto> getChat(Long id){
-        List<ChatDto> chatDtos=new ArrayList<>();
+    /**
+     *차단 여부 나눔 **/
+    public List<ChatDto> getChat(Long id) {
+        //block fetch join 땡겨옴
+        List<Long> blockUserIdList = blockRepository.findBlockByFromUserId(id).stream().map(b -> b.getToUser().getId()).collect(Collectors.toList());
+
+
+        List<ChatDto> chatDtos = new ArrayList<>();
 //       chatDtos.add(new ChatDto(chatRoom.getId(),toUser.getId(),toUser.getName(),toUser.getImageUrl(),
 //               chatMessageRepository.findChatMessageByRoomId(chatRoom.getId())));
-//
         List<ChatRoomUser> chatRoomUserByUserId = chatRoomUserRepository.findByChatRoomUserByUserId(id);
 
 
         first:
-        for(int i=0;i<chatRoomUserByUserId.size();i++){
+        for (int i = 0; i < chatRoomUserByUserId.size(); i++) {
             ChatRoomUser chatRoomUser1 = chatRoomUserByUserId.get(i);
             List<ChatRoomUser> chatRoomUserByRoomId = chatRoomUserRepository.findByRoomId(chatRoomUser1.getChatRoom().getId());
-            ChatDto chatDto=new ChatDto();
-            ChatRoom chatRoom=chatRoomUser1.getChatRoom();
+            ChatDto chatDto = new ChatDto();
+            ChatRoom chatRoom = chatRoomUser1.getChatRoom();
 
             for (ChatRoomUser chatRoomUser : chatRoomUserByRoomId) {
-
-
                 User user = chatRoomUser.getUser();
 
-                    chatDto.getParticipantNames().add(user.getName());
-                    chatDto.getParticipantIds().add(user.getId());
-                    chatDto.getParticipantImageUrls().add(user.getImageUrl());
-                    List<ChatMessageDto> chatMessageByRoomId = chatMessageRepository.findChatMessageByRoomId(chatRoom.getId(), chatRoomUser.getExitDate());
 
-                    if(user.getId().equals(id)){
-                            if(chatMessageByRoomId.isEmpty()&&chatRoomUser.getIsExit().equals(true))
-                            continue first;
+                List<ChatMessageDto> chatMessageByRoomId = chatMessageRepository.findChatMessageByRoomId(chatRoom.getId(), chatRoomUser.getExitDate());
 
-                        }
-                    chatDto.setMessages(chatMessageByRoomId);
+                if (user.getId().equals(id)) {
+                    if (chatMessageByRoomId.isEmpty() && chatRoomUser.getIsExit().equals(true))
+                        continue first;
 
                 }
+                chatDto.getParticipantNames().add(user.getName());
+                chatDto.getParticipantIds().add(user.getId());
+                chatDto.getParticipantImageUrls().add(user.getImageUrl());
+                chatDto.setMessages(chatMessageByRoomId);
 
-                chatDtos.add(chatDto);
             }
 
-            return chatDtos;
+            chatDtos.add(chatDto);
+        }
+
+        return chatDtos;
 
 
     }
-//    public List<ChatDto> getChatByExitDate(Long id,LocalDateTime exitDate){
+
+    //    public List<ChatDto> getChatByExitDate(Long id,LocalDateTime exitDate){
 //        List<ChatDto> chatDtos=new ArrayList<>();
 ////       chatDtos.add(new ChatDto(chatRoom.getId(),toUser.getId(),toUser.getName(),toUser.getImageUrl(),
 ////               chatMessageRepository.findChatMessageByRoomId(chatRoom.getId())));
@@ -216,24 +243,23 @@ public class ChatService {
 //
 //    }
 //
-
-
     @Transactional
-    public void deleteChatRoomByUserId(Long userId){
+    public void deleteChatRoomByUserId(Long userId) {
         List<ChatRoomUser> byChatRoomUserByUserId = chatRoomUserRepository.findByChatRoomUserByUserId(userId);
-        for(ChatRoomUser chatRoomUser:byChatRoomUserByUserId){
+        for (ChatRoomUser chatRoomUser : byChatRoomUserByUserId) {
             Long roomId = chatRoomUser.getChatRoom().getId();
-            deleteChatRoom(roomId,userId);
+            deleteChatRoom(roomId, userId);
         }
     }
 
 
     /**
-     채팅방 삭제
-     채팅방 회원남았을시 false
-     채팅방 회원 모두 나갔을시 true**/
+     * 채팅방 삭제
+     * 채팅방 회원남았을시 false
+     * 채팅방 회원 모두 나갔을시 true
+     **/
     @Transactional
-    public Boolean deleteChatRoom(Long roomId,Long userId) {
+    public Boolean deleteChatRoom(Long roomId, Long userId) {
 //        User user = userRepository.findById(userId).orElseThrow(UserNotFoundException::new);
         List<ChatRoomUser> findChatRoomUser = chatRoomUserRepository.findByRoomId(roomId);
         List<ChatMessageDto> chatMessageByRoomId = chatMessageRepository.findChatMessageByRoomId(roomId, null);
@@ -261,11 +287,10 @@ public class ChatService {
     }
 
 
-
-
-        /**
-         * 유저 퇴장여부를 redis안에 넣었을때
-         * 메시지를 보낼때마다 쿼리문이 하나씩 더 추가된다.**/
+    /**
+     * 유저 퇴장여부를 redis안에 넣었을때
+     * 메시지를 보낼때마다 쿼리문이 하나씩 더 추가된다.
+     **/
 
 //        for(ChatRoomUser chatRoomUser :findChatRoomUser){
 //           if(chatRoomUser.getUser().getId().equals(userId)){
@@ -299,30 +324,14 @@ public class ChatService {
 //
 //            }
 //        }
-
-
-
-
-    public void moveChatRoom(Long userId,Long roomId,String email)throws Exception{
-        chatMessageRepository.moveChatRoom(userId,roomId,email);
+    public void moveChatRoom(Long userId, Long roomId, String email) throws Exception {
+        chatMessageRepository.moveChatRoom(userId, roomId, email);
     }
 
-
-
-    public void enterChatRoom(Long roomId) {
-        System.out.println(roomId);
-        ChannelTopic topic = topics.get(roomId);
-        if (topic == null) {
-            topic = new ChannelTopic(String.valueOf(roomId));
-            redisMessageListener.addMessageListener(redisSubscriber, topic);
-            topics.put(roomId, topic);
-        }
-    }
 
     public ChannelTopic getTopic(Long roomId) {
         return topics.get(roomId);
     }
-
 
 
 }

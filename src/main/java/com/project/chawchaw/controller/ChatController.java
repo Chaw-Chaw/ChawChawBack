@@ -54,7 +54,6 @@ public class ChatController {
 
 //        System.out.println(message.getRegDate());
         chatService.enterChatRoom(message.getRoomId());
-
         // Websocket에 발행된 메시지를 redis로 발행한다(publish)
         chatService.publish(chatService.getTopic(message.getRoomId()), message);
     }

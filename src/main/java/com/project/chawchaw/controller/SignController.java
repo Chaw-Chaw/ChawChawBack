@@ -6,6 +6,7 @@ import com.project.chawchaw.config.response.ResponseMessage;
 import com.project.chawchaw.dto.mail.MailRequestDto;
 import com.project.chawchaw.dto.social.FaceBookProfile;
 import com.project.chawchaw.dto.social.KakaoProfile;
+import com.project.chawchaw.dto.social.RetKakaoAuth;
 import com.project.chawchaw.dto.social.SocialLoginResponseDto;
 import com.project.chawchaw.dto.user.*;
 import com.project.chawchaw.config.auth.CustomUserDetails;
@@ -144,8 +145,7 @@ public class SignController {
             if (requestDto.getProvider().equals("kakao")||requestDto.getProvider().equals("facebook")) {
 
                 if (requestDto.getProvider().equals("kakao") && requestDto.getKakaoToken() != null) {
-                    String token = kakaoService.getKakaoTokenInfo(requestDto.getKakaoToken()).getAccess_token();
-                    KakaoProfile kakaoProfile = kakaoService.getKakaoProfile(token);
+                    KakaoProfile kakaoProfile = kakaoService.getKakaoProfile(requestDto.getKakaoToken());
                     String email = kakaoProfile.getEmail();
                     if (signService.validUserWithProvider(email, requestDto.getProvider())) {
                         UserLoginResponseDto userLoginResponseDto = signService.loginByProvider(email, requestDto.getProvider());

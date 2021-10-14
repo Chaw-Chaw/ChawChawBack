@@ -90,6 +90,39 @@ public class ChatMessageRepository {
 
     }
 
+    /**
+     * roomId로 chatMessage 조회 차단 되어있을 때**/
+    public List<ChatMessageDto> findChatMessageByRoomIdWithBlock(Long roomId, LocalDateTime exitDate,LocalDateTime blockDate){
+        Set<String> keys = redisTemplate.keys(roomId.toString()+"_"+"*");
+
+        List<ChatMessageDto>chatMessageDtos=new ArrayList<>();
+        for(String key:keys) {
+
+            ChatMessageDto chatMessageDto = objectMapper.convertValue(redisTemplate.opsForValue().get(key), ChatMessageDto.class);
+            if (exitDate == null) {
+                chatMessageDtos.add(chatMessageDto);
+            }
+            else{
+                if(chatMessageDto.getRegDate().isAfter(exitDate)&&chatMessageDto.getRegDate().isBefore(blockDate)){
+                    chatMessageDtos.add(chatMessageDto);
+                }
+            }
+        }
+
+        Collections.sort(chatMessageDtos, Comparator.comparing(ChatMessageDto::getRegDate));
+//               (c1,c2)-> {
+//
+//          return c2.getRegDate().compareTo(c1.getRegDate());
+//       });
+
+        return chatMessageDtos.stream()
+//                .limit(20)
+                .collect(Collectors.toList());
+
+    }
+
+
+
 
 
     public void deleteByRoomId(Long roomId) {

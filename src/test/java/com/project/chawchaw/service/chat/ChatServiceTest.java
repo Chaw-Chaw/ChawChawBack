@@ -1,5 +1,6 @@
 package com.project.chawchaw.service.chat;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.gson.Gson;
 import com.project.chawchaw.ChawchawApplication;
 import com.project.chawchaw.config.jwt.JwtTokenProvider;
@@ -38,6 +39,8 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.boot.web.server.LocalServerPort;
+import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.redis.listener.ChannelTopic;
 import org.springframework.messaging.converter.ByteArrayMessageConverter;
 import org.springframework.messaging.converter.MappingJackson2MessageConverter;
 import org.springframework.messaging.simp.SimpMessageSendingOperations;
@@ -51,8 +54,11 @@ import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.socket.WebSocketHttpHeaders;
 import org.springframework.web.socket.client.standard.StandardWebSocketClient;
+import org.springframework.web.socket.config.annotation.EnableWebSocket;
+import org.springframework.web.socket.config.annotation.EnableWebSocketMessageBroker;
 import org.springframework.web.socket.messaging.WebSocketStompClient;
 import org.springframework.web.socket.sockjs.client.SockJsClient;
+import org.springframework.web.socket.sockjs.client.Transport;
 import org.springframework.web.socket.sockjs.client.WebSocketTransport;
 
 import javax.persistence.EntityManager;
@@ -60,6 +66,8 @@ import javax.persistence.EntityManager;
 import java.io.UncheckedIOException;
 import java.lang.reflect.Type;
 import java.net.SocketTimeoutException;
+import java.nio.channels.Channel;
+import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.concurrent.*;
@@ -67,6 +75,7 @@ import java.util.concurrent.*;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+
 
 
 
@@ -109,6 +118,12 @@ class ChatServiceTest {
      SimpMessageSendingOperations messagingTemplate;
 
     @Autowired
+    RedisTemplate<String,Object> redisTemplate;
+
+    @Autowired
+    ObjectMapper mapper;
+
+    @Autowired
     JwtTokenProvider jwtTokenProvider;
 
     //    @LocalServerPort Integer port;
@@ -117,7 +132,7 @@ class ChatServiceTest {
     WebSocketStompClient stompClient;
     static final String WEBSOCKET_TOPIC = "/queue/chat/";
 
-    @BeforeEach
+//    @BeforeEach
     public void beforeEach()throws Exception{
 
         Language language1=Language.createLanguage("한국어","ko");
@@ -181,10 +196,16 @@ class ChatServiceTest {
          * **/
 
         blockingQueue = new LinkedBlockingDeque<>();
-        stompClient = new WebSocketStompClient(new SockJsClient(
-                Arrays.asList(new WebSocketTransport(new StandardWebSocketClient()))));
+//        stompClient = new WebSocketStompClient(new SockJsClient(
+//                Arrays.asList(new WebSocketTransport(new StandardWebSocketClient()))));
+        stompClient = new WebSocketStompClient(
+                new SockJsClient(createTransportClient()));
+        stompClient.setMessageConverter(new MappingJackson2MessageConverter());
 //        stompClient.setMessageConverter(new ByteArrayMessageConverter());
 
+    }
+    private List<Transport> createTransportClient() {
+        return Collections.singletonList(new WebSocketTransport(new StandardWebSocketClient()));
     }
 
 
@@ -192,6 +213,7 @@ class ChatServiceTest {
      * 채팅방생성 user1->user2
      */
     @Test
+    @Rollback(value = false)
     public void createChatRoom()throws Exception{
        //given
         User user1 = userRepository.findByEmail("fpdlwjzlr@naver.com").orElseThrow(UserNotFoundException::new);
@@ -201,11 +223,9 @@ class ChatServiceTest {
         ChatRoomDto room = chatService.createRoom(user2.getId(), user1.getId());
         em.flush();
         List<ChatMessageDto> chatMessageByRoomId = chatMessageRepository.findChatMessageByRoomId(room.getRoomId(),null);
-
-
         //then
-        assertThat(chatMessageByRoomId.get(0).getMessageType()).isEqualTo(MessageType.ENTER);
-        assertThat(chatMessageByRoomId.get(0).getSenderId()).isEqualTo(user1.getId());
+//        assertThat(chatMessageByRoomId.get(0).getMessageType()).isEqualTo(MessageType.ENTER);
+//        assertThat(chatMessageByRoomId.get(0).getSenderId()).isEqualTo(user1.getId());
         assertThat(chatRoomRepository.findById(room.getRoomId()).isPresent()).isTrue();
         assertThat(chatRoomUserRepository.findByChatRoomUserByUserId(user1.getId()).get(0).getChatRoom().getId()).isEqualTo(room.getRoomId());
         assertThat(chatRoomUserRepository.findByChatRoomUserByUserId(user2.getId()).get(0).getChatRoom().getId()).isEqualTo(room.getRoomId());
@@ -217,22 +237,30 @@ class ChatServiceTest {
      * 채팅메세지 발송시 소켓통신 으로 수신되는지
      * user1->user2**/
     @Test
+
     public void sendChatMessage()throws Exception{
+//        System.out.println(redisTemplate)
+//        blockingQueue = new LinkedBlockingDeque<>();
+//        stompClient = new WebSocketStompClient(new SockJsClient(
+//                Arrays.asList(new WebSocketTransport(new StandardWebSocketClient()))));
         blockingQueue = new LinkedBlockingDeque<>();
-        stompClient = new WebSocketStompClient(new SockJsClient(
-                Arrays.asList(new WebSocketTransport(new StandardWebSocketClient()))));
+//        stompClient = new WebSocketStompClient(new SockJsClient(
+//                Arrays.asList(new WebSocketTransport(new StandardWebSocketClient()))));
+        stompClient = new WebSocketStompClient(
+                new SockJsClient(createTransportClient()));
+        stompClient.setMessageConverter(new MappingJackson2MessageConverter());
+//        stompClient.setMessageConverter(new ByteArrayMessageConverter());
+
 
        //given
         UserLoginResponseDto basic = signService.login(new UserLoginRequestDto("fpdlwjzlr@naver.com","11", null, null, null, null));
 
-        UserLoginResponseDto basic2 = signService.login(new UserLoginRequestDto("fpdlwjzlr@naver.comM","22", null, null, null, null));
+        UserLoginResponseDto basic2 = signService.login(new UserLoginRequestDto("fpdlwjzlr@naver.comm","22", null, null, null, null));
 
         ChatRoomDto room = chatService.createRoom(basic.getProfile().getId(), basic2.getProfile().getId());
         em.flush();
 
        //when
-
-//
 //        stompClient.setMessageConverter(new MappingJackson2MessageConverter());
 
 //        CountDownLatch latch = new CountDownLatch(1);
@@ -240,16 +268,23 @@ class ChatServiceTest {
         headers.add("Authorization", "Bearer "+basic.getToken().getAccessToken());
         StompSession session = stompClient
                     .connect(getWsPath(), new WebSocketHttpHeaders(),headers,new StompSessionHandlerAdapter() {})
-                    .get(10, SECONDS);
-
-
+                    .get(1, SECONDS);
         session.subscribe(WEBSOCKET_TOPIC + basic2.getProfile().getId(), new DefaultStompFrameHandler());
         ChatMessageDto chatMessageDto=new ChatMessageDto(MessageType.TALK, room.getRoomId(), basic.getProfile().getId(),basic.getProfile().getName(),"message",null, LocalDateTime.now().withNano(0),false);
+//        session.send(WEBSOCKET_TOPIC + basic2.getProfile().getId(),mapper.writeValueAsString(chatMessageDto).getBytes(StandardCharsets.UTF_8));
 
 
-        messagingTemplate.convertAndSend(WEBSOCKET_TOPIC+basic2.getProfile().getId(),chatMessageDto);
-//        chatService.enterChatRoom(room.getRoomId());
-//        chatService.publish(chatService.getTopic(room.getRoomId()),chatMessageDto);
+        ChannelTopic topic=new ChannelTopic(String.valueOf(chatMessageDto.getRoomId()));
+//        redisTemplate.convertAndSend(topic.getTopic(),chatMessageDto);
+//        messagingTemplate.convertAndSend(WEBSOCKET_TOPIC+basic2.getPro
+//        file().getId(),chatMessageDto);
+//        System.out.println(room.getRoomId());
+
+//        chatService.enterChatRoom(chatMessageDto.getRoomId());
+//        chatService.publish();
+//        redisTemplate.convertAndSend(chatService.getTopic(chatMessageDto.getRoomId()).getTopic(),chatMessageDto);
+        // Websocket에 발행된 메시지를 redis로 발행한다(publish)
+//        chatService.publish(chatService.getTopic(chatMessageDto.getRoomId()), chatMessageDto);
 
 //        Assertions.assertThatThrownBy(() -> {
 //            stompClient
@@ -257,9 +292,8 @@ class ChatServiceTest {
 //                    .get(10, SECONDS);
 //        }).isInstanceOf(TimeoutException.class);
 
-
         // then
-        String jsonResult = blockingQueue.poll(10, SECONDS);
+        String jsonResult = blockingQueue.poll(1, SECONDS);
         Map<String, String> result = gson.fromJson(jsonResult, new HashMap().getClass());
         assertThat(result.get("message")).isEqualTo(chatMessageDto.getMessage());
 

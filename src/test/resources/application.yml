@@ -19,17 +19,20 @@ spring:
 
 
   datasource:
-    driver-class-name: com.mysql.cj.jdbc.Driver
-    password: ENC(3F1eltMp3xhu5T+HyPoTIg==)
-    url: jdbc:mysql://localhost:3308/chawchawtest?useSSL=false&characterEncoding=UTF-8&serverTimezone=UTC
-    username: ENC(XiRNju+2VhAm6XrJDOJ3zw==)
-
+#    driver-class-name: com.mysql.cj.jdbc.Driver
+#    password: ENC(3F1eltMp3xhu5T+HyPoTIg==)
+#    url: jdbc:mysql://localhost:3308/chawchawtest?useSSL=false&characterEncoding=UTF-8&serverTimezone=UTC
+#    username: ENC(XiRNju+2VhAm6XrJDOJ3zw==)
+    url: jdbc:h2:tcp://localhost/~/chawchaw
+    username: sa
+    password:
+    driver-class-name: org.h2.Driver
 
 
   jpa:
 
     hibernate:
-      ddl-auto: create
+      ddl-auto: none
     properties:
       hibernate:
 #        show_sql: true
@@ -66,18 +69,6 @@ file:
   path: ENC(BGTJOACnd+mHvk7cUjsNZCbdEtTU5jqmYgE15djVQqI=)
   defaultImage: ENC(XlhuSnt0n6mUWfotvHMPxOwBz0L3dCPgOwYoZiIq59ee8/mYmN/T1w==)
 
-logging:
-  level:
-      com:
-        amazonaws:
-          util:
-            EC2MetadataUtils: error
-
-  slack:
-    webhook-uri:
-
-#    ENC(F8LR/QiB95Ri8iafTfE8vag8amq0WAvizA9dke/B/OP7NU4MPjepd9UjhATferW6gaykZiMziVzkT3NDGz2yXvPNZTmIj4d9hhQXJ1QedoqMsAI4uQCDO4HDja2WUx62)
-  config: classpath:logback-spring.xml
 
 
 

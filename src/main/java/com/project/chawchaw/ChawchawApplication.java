@@ -25,18 +25,18 @@ public class ChawchawApplication {
 	public static void main(String[] args) {
 
 //		SpringApplication.run(ChawchawApplication.class, args);
-		StandardPBEStringEncryptor jasypt = new StandardPBEStringEncryptor();
-		jasypt.setPassword(System.getProperty("jasypt.encryptor.password"));
-		jasypt.setAlgorithm("PBEWithMD5AndDES");
+//		StandardPBEStringEncryptor jasypt = new StandardPBEStringEncryptor();
+//		jasypt.setPassword(System.getProperty("jasypt.encryptor.password"));
+//		jasypt.setAlgorithm("PBEWithMD5AndDES");
 
-
-		StandardEncryptableEnvironment build = StandardEncryptableEnvironment
-				.builder()
-				.encryptor(jasypt)
-				.build();
+//
+//		StandardEncryptableEnvironment build = StandardEncryptableEnvironment
+//				.builder()
+//				.encryptor(jasypt)
+//				.build();
 
 		new SpringApplicationBuilder()
-				.environment(build)
+//				.environment(build)
 				.sources(ChawchawApplication.class).run(args);
 
 
@@ -53,9 +53,11 @@ public class ChawchawApplication {
 			return new RestTemplate();
 		}
 
-	@Bean
-	public PasswordEncoder passwordEncoder() {
-		return PasswordEncoderFactories.createDelegatingPasswordEncoder();
+
+		@Bean
+		public PasswordEncoder passwordEncoder() {
+			return PasswordEncoderFactories.createDelegatingPasswordEncoder();
+
 	}
 
 

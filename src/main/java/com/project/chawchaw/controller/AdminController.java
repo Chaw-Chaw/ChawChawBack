@@ -31,6 +31,10 @@ public class AdminController {
     public static final String CLOUD_FRONT_DOMAIN_NAME = "d3t4l8y7wi01lo.cloudfront.net";
     @Value("${file.defaultImage}")
     private String defaultImage;
+    @GetMapping("/test")
+    public String test(){
+        return "test";
+    }
 
     @DeleteMapping(value = "/admin/users")
     public ResponseEntity deleteUsersByAdmin(@RequestHeader("Authorization") String token, @RequestBody UserRequestDto userRequestDto) {
