@@ -94,6 +94,7 @@ dependencies {
 
 	//es
 	implementation 'org.springframework.boot:spring-boot-starter-data-elasticsearch'
+//	implementation 'org.elasticsearch.client:elasticsearch-rest-high-level-client:7.15.0'
 //	implementation 'org.elasticsearch.client:elasticsearch-rest-high-level-client:7.9.1'
 //	implementation 'org.elasticsearch.client:elasticsearch-rest-client:7.9.3'
 //	implementation 'org.elasticsearch:elasticsearch:7.9.3'

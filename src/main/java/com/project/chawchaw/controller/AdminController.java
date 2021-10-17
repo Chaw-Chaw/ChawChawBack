@@ -59,10 +59,10 @@ public class AdminController {
 
     @GetMapping(value = "/admin/users")
     public ResponseEntity getUsersByAdmin(@RequestHeader("Authorization") String token,
-                                          @RequestBody AdminUserSearch adminUserSearch, @NotNull Pageable pageable) {
+                                          @ModelAttribute AdminUserSearch adminUserSearch) {
 
         return new ResponseEntity(DefaultResponseVo.res(ResponseMessage.READ_USER_SUCCESS, true
-                , userService.usersByAdmin(adminUserSearch, pageable)), HttpStatus.OK);
+                , userService.usersByAdmin(adminUserSearch)), HttpStatus.OK);
 
 
     }

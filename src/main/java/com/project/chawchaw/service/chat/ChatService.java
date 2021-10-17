@@ -10,6 +10,7 @@ import com.project.chawchaw.entity.ChatRoomUser;
 import com.project.chawchaw.entity.User;
 import com.project.chawchaw.exception.ChatRoomNotFoundException;
 import com.project.chawchaw.exception.UserNotFoundException;
+import com.project.chawchaw.repository.BlockRepository;
 import com.project.chawchaw.repository.chat.ChatMessageRepository;
 import com.project.chawchaw.repository.chat.ChatRoomRepository;
 import com.project.chawchaw.repository.chat.ChatRoomUserRepository;
@@ -38,11 +39,12 @@ public class ChatService {
     private final SimpMessageSendingOperations messagingTemplate;
 
     private final RedisMessageListenerContainer redisMessageListener;
+
     // 구독 처리 서비스
     private final ChatSubService redisSubscriber;
     // Redis
     private static final String CHAT_ROOMS = "CHAT_ROOM";
-
+    private final BlockRepository blockRepository;
     private Map<Long, ChannelTopic> topics=new HashMap<>();
 
 
@@ -50,8 +52,42 @@ public class ChatService {
     public void publish(ChannelTopic topic, ChatMessageDto message) {
 
         redisTemplate.convertAndSend(topic.getTopic(), message);
-//        chatMessageRepository.createChatMessage(message);
     }
+    @Transactional
+    public void publishTest(ChannelTopic topic, ChatMessageDto roomMessage) {
+
+            List<ChatRoomUser> chatRoomUserList = chatRoomUserRepository.findByRoomId(roomMessage.getRoomId());
+
+
+            // Websocket 구독자에게 채팅 메시지 Send
+            for(ChatRoomUser chatRoomUser:chatRoomUserList) {
+                User user= chatRoomUser.getUser();
+
+                if (!roomMessage.getSenderId().equals(user.getId())) {
+                    if(user.getBlockList().isEmpty()||!user.getBlockList().stream().map(b->b.getToUser().getId()).collect(Collectors.toSet()).contains(roomMessage.getSenderId())){
+                        if(chatMessageRepository.getRoomSession(user.getEmail())!=null&&chatMessageRepository.getRoomSession(user.getEmail())==roomMessage.getRoomId()){
+                            roomMessage.setIsRead(true);
+                        }
+                        else {
+                            roomMessage.setIsRead(false);
+                        }
+                        messagingTemplate.convertAndSend("/queue/chat/" + user.getId(), roomMessage);
+                    }
+                    else{
+                        roomMessage.setIsRead(true);
+                    }
+                }
+//
+            }
+            chatMessageRepository.createChatMessage(roomMessage);
+
+
+
+    }
+
+
+
+
 
     //chatroom
     @Transactional
@@ -145,44 +181,46 @@ public class ChatService {
 
     }
 
-    public List<ChatDto> getChat(Long id){
-        List<ChatDto> chatDtos=new ArrayList<>();
+    public List<ChatDto> getChat(Long id) {
+        //block fetch join 땡겨옴
+        List<Long> blockUserIdList = blockRepository.findBlockByFromUserId(id).stream().map(b -> b.getToUser().getId()).collect(Collectors.toList());
+
+
+        List<ChatDto> chatDtos = new ArrayList<>();
 //       chatDtos.add(new ChatDto(chatRoom.getId(),toUser.getId(),toUser.getName(),toUser.getImageUrl(),
 //               chatMessageRepository.findChatMessageByRoomId(chatRoom.getId())));
-//
         List<ChatRoomUser> chatRoomUserByUserId = chatRoomUserRepository.findByChatRoomUserByUserId(id);
 
 
         first:
-        for(int i=0;i<chatRoomUserByUserId.size();i++){
+        for (int i = 0; i < chatRoomUserByUserId.size(); i++) {
             ChatRoomUser chatRoomUser1 = chatRoomUserByUserId.get(i);
             List<ChatRoomUser> chatRoomUserByRoomId = chatRoomUserRepository.findByRoomId(chatRoomUser1.getChatRoom().getId());
-            ChatDto chatDto=new ChatDto();
-            ChatRoom chatRoom=chatRoomUser1.getChatRoom();
+            ChatDto chatDto = new ChatDto();
+            ChatRoom chatRoom = chatRoomUser1.getChatRoom();
 
             for (ChatRoomUser chatRoomUser : chatRoomUserByRoomId) {
-
-
                 User user = chatRoomUser.getUser();
 
-                    chatDto.getParticipantNames().add(user.getName());
-                    chatDto.getParticipantIds().add(user.getId());
-                    chatDto.getParticipantImageUrls().add(user.getImageUrl());
-                    List<ChatMessageDto> chatMessageByRoomId = chatMessageRepository.findChatMessageByRoomId(chatRoom.getId(), chatRoomUser.getExitDate());
 
-                    if(user.getId().equals(id)){
-                            if(chatMessageByRoomId.isEmpty()&&chatRoomUser.getIsExit().equals(true))
-                            continue first;
+                List<ChatMessageDto> chatMessageByRoomId = chatMessageRepository.findChatMessageByRoomId(chatRoom.getId(), chatRoomUser.getExitDate());
 
-                        }
-                    chatDto.setMessages(chatMessageByRoomId);
+                if (user.getId().equals(id)) {
+                    if (chatMessageByRoomId.isEmpty() && chatRoomUser.getIsExit().equals(true))
+                        continue first;
 
                 }
+                chatDto.getParticipantNames().add(user.getName());
+                chatDto.getParticipantIds().add(user.getId());
+                chatDto.getParticipantImageUrls().add(user.getImageUrl());
+                chatDto.setMessages(chatMessageByRoomId);
 
-                chatDtos.add(chatDto);
             }
 
-            return chatDtos;
+            chatDtos.add(chatDto);
+        }
+
+        return chatDtos;
 
 
     }
@@ -310,7 +348,6 @@ public class ChatService {
 
 
     public void enterChatRoom(Long roomId) {
-        System.out.println(roomId);
         ChannelTopic topic = topics.get(roomId);
         if (topic == null) {
             topic = new ChannelTopic(String.valueOf(roomId));

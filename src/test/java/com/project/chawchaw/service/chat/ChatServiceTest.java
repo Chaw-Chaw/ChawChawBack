@@ -1,6 +1,8 @@
 package com.project.chawchaw.service.chat;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.gson.Gson;
+import com.google.gson.JsonObject;
 import com.project.chawchaw.ChawchawApplication;
 import com.project.chawchaw.config.jwt.JwtTokenProvider;
 import com.project.chawchaw.config.socket.WebSocketConfig;
@@ -24,6 +26,8 @@ import com.project.chawchaw.service.SignService;
 import com.project.chawchaw.service.UserService;
 import io.lettuce.core.dynamic.domain.Timeout;
 import org.assertj.core.api.Assertions;
+import org.json.simple.JSONObject;
+import org.json.simple.parser.JSONParser;
 import org.junit.Before;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -60,6 +64,7 @@ import javax.persistence.EntityManager;
 import java.io.UncheckedIOException;
 import java.lang.reflect.Type;
 import java.net.SocketTimeoutException;
+import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.concurrent.*;
@@ -72,9 +77,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @Transactional
-
 //@SpringBootTest(classes =ChawchawApplication.class)
-
 class ChatServiceTest {
 
 
@@ -111,13 +114,16 @@ class ChatServiceTest {
     @Autowired
     JwtTokenProvider jwtTokenProvider;
 
+    @Autowired
+    ObjectMapper mapper;
+
     //    @LocalServerPort Integer port;
     @LocalServerPort Integer port;
     BlockingQueue<String> blockingQueue;
     WebSocketStompClient stompClient;
     static final String WEBSOCKET_TOPIC = "/queue/chat/";
 
-    @BeforeEach
+//    @BeforeEach
     public void beforeEach()throws Exception{
 
         Language language1=Language.createLanguage("한국어","ko");
@@ -225,7 +231,7 @@ class ChatServiceTest {
        //given
         UserLoginResponseDto basic = signService.login(new UserLoginRequestDto("fpdlwjzlr@naver.com","11", null, null, null, null));
 
-        UserLoginResponseDto basic2 = signService.login(new UserLoginRequestDto("fpdlwjzlr@naver.comM","22", null, null, null, null));
+        UserLoginResponseDto basic2 = signService.login(new UserLoginRequestDto("fpdlwjzlr@naver.comm","22", null, null, null, null));
 
         ChatRoomDto room = chatService.createRoom(basic.getProfile().getId(), basic2.getProfile().getId());
         em.flush();
@@ -240,14 +246,18 @@ class ChatServiceTest {
         headers.add("Authorization", "Bearer "+basic.getToken().getAccessToken());
         StompSession session = stompClient
                     .connect(getWsPath(), new WebSocketHttpHeaders(),headers,new StompSessionHandlerAdapter() {})
-                    .get(10, SECONDS);
+                    .get(5, SECONDS);
 
+
+
+        System.out.println(basic2.getProfile().getId());
 
         session.subscribe(WEBSOCKET_TOPIC + basic2.getProfile().getId(), new DefaultStompFrameHandler());
-        ChatMessageDto chatMessageDto=new ChatMessageDto(MessageType.TALK, room.getRoomId(), basic.getProfile().getId(),basic.getProfile().getName(),"message",null, LocalDateTime.now().withNano(0),false);
+        ChatMessageDto chatMessageDto=new ChatMessageDto(MessageType.TALK, 1L, basic.getProfile().getId(),basic.getProfile().getName(),"message",null, LocalDateTime.now().withNano(0),false);
 
 
-        messagingTemplate.convertAndSend(WEBSOCKET_TOPIC+basic2.getProfile().getId(),chatMessageDto);
+//        messagingTemplate.convertAndSend(WEBSOCKET_TOPIC+basic2.getProfile().getId(),chatMessageDto);
+        session.send("/message/test",mapper.writeValueAsString(chatMessageDto).getBytes(StandardCharsets.UTF_8));
 //        chatService.enterChatRoom(room.getRoomId());
 //        chatService.publish(chatService.getTopic(room.getRoomId()),chatMessageDto);
 
@@ -259,11 +269,62 @@ class ChatServiceTest {
 
 
         // then
-        String jsonResult = blockingQueue.poll(10, SECONDS);
+        String jsonResult = blockingQueue.poll(5, SECONDS);
         Map<String, String> result = gson.fromJson(jsonResult, new HashMap().getClass());
+        JSONParser jsonParser = new JSONParser();
+        JSONObject jsonObject = (JSONObject) jsonParser.parse(jsonResult);
+
         assertThat(result.get("message")).isEqualTo(chatMessageDto.getMessage());
+        assertThat(jsonObject.get("isRead")).isEqualTo(false);
+
 
     }
+    /**
+     * user1->user2
+     * user2가 채팅방세션있음 message isRead->true
+     * **/
+    @Test
+    public void sendChatMessageWithUser2()throws Exception{
+        blockingQueue = new LinkedBlockingDeque<>();
+        stompClient = new WebSocketStompClient(new SockJsClient(
+                Arrays.asList(new WebSocketTransport(new StandardWebSocketClient()))));
+
+        //given
+        UserLoginResponseDto basic = signService.login(new UserLoginRequestDto("fpdlwjzlr@naver.com","11", null, null, null, null));
+
+        UserLoginResponseDto basic2 = signService.login(new UserLoginRequestDto("fpdlwjzlr@naver.comm","22", null, null, null, null));
+
+        ChatRoomDto room = chatService.createRoom(basic.getProfile().getId(), basic2.getProfile().getId());
+        em.flush();
+        //when
+        StompHeaders headers1 = new StompHeaders();
+        StompHeaders headers2 = new StompHeaders();
+
+        headers1.add("Authorization", "Bearer "+basic.getToken().getAccessToken());
+        headers2.add("Authorization", "Bearer "+basic2.getToken().getAccessToken());
+        StompSession session = stompClient
+                .connect(getWsPath(), new WebSocketHttpHeaders(),headers1,new StompSessionHandlerAdapter() {})
+                .get(5, SECONDS);
+        StompSession session1 = stompClient
+                .connect(getWsPath(), new WebSocketHttpHeaders(),headers2,new StompSessionHandlerAdapter() {})
+                .get(5, SECONDS);
+
+        session.subscribe(WEBSOCKET_TOPIC + basic2.getProfile().getId(), new DefaultStompFrameHandler());
+        ChatMessageDto chatMessageDto=new ChatMessageDto(MessageType.TALK, 1L, basic.getProfile().getId(),basic.getProfile().getName(),"message",null, LocalDateTime.now().withNano(0),false);
+
+        session.send("/message/test",mapper.writeValueAsString(chatMessageDto).getBytes(StandardCharsets.UTF_8));
+
+        // then
+        String jsonResult = blockingQueue.poll(5, SECONDS);
+        Map<String, String> result = gson.fromJson(jsonResult, new HashMap().getClass());
+        JSONParser jsonParser = new JSONParser();
+        JSONObject jsonObject = (JSONObject) jsonParser.parse(jsonResult);
+
+        assertThat(result.get("message")).isEqualTo(chatMessageDto.getMessage());
+        assertThat(jsonObject.get("isRead")).isEqualTo(true);
+
+    }
+
     private String getWsPath() {
         return String.format("ws://localhost:%d/ws", port);
 //        return "ws://localhost:8080/ws";

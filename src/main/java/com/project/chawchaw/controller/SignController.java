@@ -144,8 +144,7 @@ public class SignController {
             if (requestDto.getProvider().equals("kakao")||requestDto.getProvider().equals("facebook")) {
 
                 if (requestDto.getProvider().equals("kakao") && requestDto.getKakaoToken() != null) {
-                    String token = kakaoService.getKakaoTokenInfo(requestDto.getKakaoToken()).getAccess_token();
-                    KakaoProfile kakaoProfile = kakaoService.getKakaoProfile(token);
+                    KakaoProfile kakaoProfile = kakaoService.getKakaoProfile(requestDto.getKakaoToken());
                     String email = kakaoProfile.getEmail();
                     if (signService.validUserWithProvider(email, requestDto.getProvider())) {
                         UserLoginResponseDto userLoginResponseDto = signService.loginByProvider(email, requestDto.getProvider());

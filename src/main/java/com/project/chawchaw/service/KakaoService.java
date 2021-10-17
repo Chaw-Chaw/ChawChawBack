@@ -85,9 +85,17 @@ public class KakaoService {
 //    }
 
 
-    public KakaoProfile getKakaoProfile(String accessToken) throws Exception {
+    public KakaoProfile getKakaoProfile(String code) throws Exception {
 
+
+        String accessToken = null;
         try {
+            RetKakaoAuth kakaoTokenInfo = getKakaoTokenInfo(code);
+            if (kakaoTokenInfo != null) {
+                accessToken = kakaoTokenInfo.getAccess_token();
+            } else {
+                throw new Exception();
+            }
 
             HttpHeaders headers = new HttpHeaders();
             headers.set("Authorization", "Bearer " + accessToken);
@@ -120,6 +128,8 @@ public class KakaoService {
 
 
     public RetKakaoAuth getKakaoTokenInfo(String code) {
+
+
         // Set header : Content-type: application/x-www-form-urlencoded
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
