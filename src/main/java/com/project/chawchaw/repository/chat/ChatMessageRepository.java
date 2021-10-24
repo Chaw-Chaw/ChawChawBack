@@ -165,6 +165,7 @@ public class ChatMessageRepository {
         redisTemplate.opsForValue().set("session::"+email,-1L);
     }
     public void deleteRoomSession(String email){
+        System.out.println("session::" + email);
         redisTemplate.delete("session::"+email);
     }
 

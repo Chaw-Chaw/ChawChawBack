@@ -61,6 +61,7 @@ public class StompConfig implements ChannelInterceptor {
 
         }
         else if(StompCommand.DISCONNECT == accessor.getCommand()){
+            System.out.println(accessor.getUser());
             if (accessor.getUser()!=null){
                 chatMessageRepository.deleteRoomSession(accessor.getUser().getName());
             }
