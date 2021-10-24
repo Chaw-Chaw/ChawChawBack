@@ -5,6 +5,7 @@ import com.project.chawchaw.dto.chat.ChatMessageDto;
 
 import com.project.chawchaw.dto.chat.ChatRoomDto;
 import com.project.chawchaw.dto.chat.MessageType;
+import com.project.chawchaw.entity.Block;
 import com.project.chawchaw.entity.ChatRoom;
 import com.project.chawchaw.entity.ChatRoomUser;
 import com.project.chawchaw.entity.User;
@@ -53,17 +54,20 @@ public class ChatService {
 
         redisTemplate.convertAndSend(topic.getTopic(), message);
     }
+
     @Transactional
     public void publishTest(ChannelTopic topic, ChatMessageDto roomMessage) {
 
             List<ChatRoomUser> chatRoomUserList = chatRoomUserRepository.findByRoomId(roomMessage.getRoomId());
+            System.out.println(chatRoomUserList.isEmpty());
 
 
-            // Websocket 구독자에게 채팅 메시지 Send
+        // Websocket 구독자에게 채팅 메시지 Send
             for(ChatRoomUser chatRoomUser:chatRoomUserList) {
                 User user= chatRoomUser.getUser();
 
                 if (!roomMessage.getSenderId().equals(user.getId())) {
+                    //sender가 차단목록에 없을 때
                     if(user.getBlockList().isEmpty()||!user.getBlockList().stream().map(b->b.getToUser().getId()).collect(Collectors.toSet()).contains(roomMessage.getSenderId())){
                         if(chatMessageRepository.getRoomSession(user.getEmail())!=null&&chatMessageRepository.getRoomSession(user.getEmail())==roomMessage.getRoomId()){
                             roomMessage.setIsRead(true);
@@ -74,7 +78,7 @@ public class ChatService {
                         messagingTemplate.convertAndSend("/queue/chat/" + user.getId(), roomMessage);
                     }
                     else{
-                        roomMessage.setIsRead(true);
+                        roomMessage.setIsRead(false);
                     }
                 }
 //
@@ -181,35 +185,58 @@ public class ChatService {
 
     }
 
-    public List<ChatDto> getChat(Long id) {
+    public List<ChatDto> getChat(Long userId) {
+
         //block fetch join 땡겨옴
-        List<Long> blockUserIdList = blockRepository.findBlockByFromUserId(id).stream().map(b -> b.getToUser().getId()).collect(Collectors.toList());
+        List<Block> blockByFromUserId = blockRepository.findBlockByFromUserId(userId);
 
+        //key : toUserId  , value :(block)regDate
+        Map<Long,LocalDateTime>blockMap =new HashMap<>();
 
+        blockByFromUserId.stream().forEach(b->{
+            blockMap.put(b.getToUser().getId(),b.getRegDate());
+        });
         List<ChatDto> chatDtos = new ArrayList<>();
 //       chatDtos.add(new ChatDto(chatRoom.getId(),toUser.getId(),toUser.getName(),toUser.getImageUrl(),
 //               chatMessageRepository.findChatMessageByRoomId(chatRoom.getId())));
-        List<ChatRoomUser> chatRoomUserByUserId = chatRoomUserRepository.findByChatRoomUserByUserId(id);
-
+        List<ChatRoomUser> chatRoomUserByUserId = chatRoomUserRepository.findByChatRoomUserByUserId(userId);
 
         first:
         for (int i = 0; i < chatRoomUserByUserId.size(); i++) {
             ChatRoomUser chatRoomUser1 = chatRoomUserByUserId.get(i);
             List<ChatRoomUser> chatRoomUserByRoomId = chatRoomUserRepository.findByRoomId(chatRoomUser1.getChatRoom().getId());
+
+            Long toUserId=null;
+            //chatDto 생성
             ChatDto chatDto = new ChatDto();
+
             ChatRoom chatRoom = chatRoomUser1.getChatRoom();
+
+            List<ChatMessageDto> chatMessageByRoomId=null;
 
             for (ChatRoomUser chatRoomUser : chatRoomUserByRoomId) {
                 User user = chatRoomUser.getUser();
+//                List<ChatMessageDto> chatMessageByRoomId = chatMessageRepository.findChatMessageByRoomId(chatRoom.getId(), chatRoomUser.getExitDate());
 
+                if (user.getId().equals(userId)) {
+                    if(toUserId==null){
+                        toUserId=chatRoomUserByRoomId.get(1).getUser().getId();
+                    }
+                    if(blockMap.get(toUserId)!=null)
+                    chatMessageByRoomId=chatMessageRepository.findChatMessageByRoomIdWithBlock(chatRoom.getId(), chatRoomUser.getExitDate(),blockMap.get(toUserId));
 
-                List<ChatMessageDto> chatMessageByRoomId = chatMessageRepository.findChatMessageByRoomId(chatRoom.getId(), chatRoomUser.getExitDate());
+                    else{
+                        chatMessageByRoomId=chatMessageRepository.findChatMessageByRoomId(chatRoom.getId(),chatRoomUser.getExitDate());
+                    }
 
-                if (user.getId().equals(id)) {
                     if (chatMessageByRoomId.isEmpty() && chatRoomUser.getIsExit().equals(true))
                         continue first;
-
                 }
+
+                else{
+                    toUserId=user.getId();
+                }
+
                 chatDto.getParticipantNames().add(user.getName());
                 chatDto.getParticipantIds().add(user.getId());
                 chatDto.getParticipantImageUrls().add(user.getImageUrl());
@@ -221,8 +248,6 @@ public class ChatService {
         }
 
         return chatDtos;
-
-
     }
 //    public List<ChatDto> getChatByExitDate(Long id,LocalDateTime exitDate){
 //        List<ChatDto> chatDtos=new ArrayList<>();

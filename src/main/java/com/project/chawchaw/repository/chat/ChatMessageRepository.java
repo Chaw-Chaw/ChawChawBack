@@ -93,7 +93,7 @@ public class ChatMessageRepository {
     }
     /**
      * roomId
-     * 메세지 조회 차단 시간**/
+     * 메세지 조회 차단 시간 **/
 
     public List<ChatMessageDto> findChatMessageByRoomIdWithBlock(Long roomId, LocalDateTime exitDate,LocalDateTime blockDate){
         Set<String> keys = redisTemplate.keys(roomId.toString()+"_"+"*");
@@ -141,7 +141,7 @@ public class ChatMessageRepository {
     }
 
     public void moveChatRoom(Long userId,Long roomId,String email)throws Exception{
-        if(redisTemplate.opsForValue().get("session::"+"_"+email)==null){
+        if(redisTemplate.opsForValue().get("session::"+email)==null){
             throw new Exception();
         }
         redisTemplate.opsForValue().set("session::"+email,roomId);

@@ -25,7 +25,6 @@ import java.time.LocalDateTime;
 
 @RequiredArgsConstructor
 @Controller
-
 public class ChatController {
 
     private final ChatMessageRepository chatRoomRepository;
@@ -58,6 +57,7 @@ public class ChatController {
     @MessageMapping("/message/test")
     public void messageTest(@RequestBody @Valid ChatMessageDto message) {
 
+        System.out.println("메시지 들어옴");
 
         if (message.getRegDate()==null) {
             message.setRegDate(LocalDateTime.now().withNano(0));

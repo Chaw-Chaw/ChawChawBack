@@ -23,13 +23,15 @@ spring:
     password: ENC(3F1eltMp3xhu5T+HyPoTIg==)
     url: jdbc:mysql://localhost:3308/chawchawtest?useSSL=false&characterEncoding=UTF-8&serverTimezone=UTC
     username: ENC(XiRNju+2VhAm6XrJDOJ3zw==)
+#    data: classpath:data.sql
+
 
 
 
   jpa:
 
     hibernate:
-      ddl-auto: none
+      ddl-auto: update
     properties:
       hibernate:
 #        show_sql: true

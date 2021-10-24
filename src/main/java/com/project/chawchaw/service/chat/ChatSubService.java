@@ -42,7 +42,6 @@ public class ChatSubService implements MessageListener {
 
             ChatMessageDto roomMessage = objectMapper.readValue(publishMessage, ChatMessageDto.class);
 
-
             List<ChatRoomUser> chatRoomUserList = chatRoomUserRepository.findByRoomId(roomMessage.getRoomId());
 
             // Websocket 구독자에게 채팅 메시지 Send
@@ -61,7 +60,7 @@ public class ChatSubService implements MessageListener {
                         messagingTemplate.convertAndSend("/queue/chat/" + user.getId(), roomMessage);
                     }
                     else{
-                        roomMessage.setIsRead(true);
+                        roomMessage.setIsRead(false);
                     }
                 }
 //
