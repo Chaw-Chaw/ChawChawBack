@@ -233,9 +233,6 @@ public class StompTest {
                 })
                 .get(5, SECONDS);
 
-
-        System.out.println(basic2.getProfile().getId());
-
         session.subscribe(WEBSOCKET_TOPIC + basic2.getProfile().getId(), new DefaultStompFrameHandler());
         ChatMessageDto chatMessageDto = new ChatMessageDto(MessageType.TALK, 1L, basic.getProfile().getId(), basic.getProfile().getName(), "message", null, LocalDateTime.now().withNano(0), false);
 
@@ -255,7 +252,7 @@ public class StompTest {
         // then
         String jsonResult = blockingQueue.poll(5, SECONDS);
 
-//        session.disconnect();
+        session.disconnect();
 
         Map<String, String> result = gson.fromJson(jsonResult, new HashMap().getClass());
         JSONParser jsonParser = new JSONParser();
@@ -307,9 +304,16 @@ public class StompTest {
 
         session.send("/message/test", mapper.writeValueAsString(chatMessageDto).getBytes(StandardCharsets.UTF_8));
 
+
+
         // then
         String jsonResult = blockingQueue.poll(5, SECONDS);
         Map<String, String> result = gson.fromJson(jsonResult, new HashMap().getClass());
+
+        session.disconnect();
+        session1.disconnect();
+
+
         JSONParser jsonParser = new JSONParser();
         JSONObject jsonObject = (JSONObject) jsonParser.parse(jsonResult);
 
@@ -358,6 +362,11 @@ public class StompTest {
 
         // then
         String jsonResult = blockingQueue.poll(5, SECONDS);
+
+        session.disconnect();
+
+        session1.disconnect();
+
         assertThat(jsonResult).isNull();
     }
 

@@ -35,8 +35,9 @@ public class StompConfig implements ChannelInterceptor {
 
     @Override
     public Message<?> preSend(Message<?> message, MessageChannel channel) {
-        StompHeaderAccessor accessor = StompHeaderAccessor.wrap(message);
+//        StompHeaderAccessor accessor = StompHeaderAccessor.wrap(message);
 
+        StompHeaderAccessor accessor = MessageHeaderAccessor.getAccessor(message, StompHeaderAccessor.class);
 //        StompHeaderAccessor accessor = MessageHeaderAccessor.getAccessor(message, StompHeaderAccessor.class);
         if (StompCommand.CONNECT == accessor.getCommand()) {
             String token = accessor.getFirstNativeHeader("Authorization");
@@ -45,7 +46,6 @@ public class StompConfig implements ChannelInterceptor {
                 token=token.replace("Bearer ","");
             }
             else{
-
                 return null;
             }
 
@@ -61,7 +61,6 @@ public class StompConfig implements ChannelInterceptor {
 
         }
         else if(StompCommand.DISCONNECT == accessor.getCommand()){
-            System.out.println(accessor.getUser());
             if (accessor.getUser()!=null){
                 chatMessageRepository.deleteRoomSession(accessor.getUser().getName());
             }
