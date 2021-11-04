@@ -19,6 +19,5 @@ public class AdminUserSearch {
     private String sort;
     private String country;
     private String school;
-
-
+    private Integer pageNo;
 }

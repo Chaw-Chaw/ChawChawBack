@@ -15,6 +15,7 @@ import com.project.chawchaw.repository.user.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -336,8 +337,9 @@ public class UserService {
 
     /**
      * Admin**/
-   public Page<UsersByAdminDto> usersByAdmin(AdminUserSearch adminUserSearch, Pageable pageable){
-        return userRepository.usersListByAdmin(adminUserSearch,pageable);
+   public Page<UsersByAdminDto> usersByAdmin(AdminUserSearch adminUserSearch){
+       PageRequest pageRequest = PageRequest.of(adminUserSearch.getPageNo(), 20);
+       return userRepository.usersListByAdmin(adminUserSearch,pageRequest);
 
     }
 

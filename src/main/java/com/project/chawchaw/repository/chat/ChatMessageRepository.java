@@ -59,6 +59,8 @@ public class ChatMessageRepository {
 
     }
 
+
+
     /**
      * roomId로 챗메시지 조회**/
     public List<ChatMessageDto> findChatMessageByRoomId(Long roomId, LocalDateTime exitDate){
@@ -89,6 +91,38 @@ public class ChatMessageRepository {
                 .collect(Collectors.toList());
 
     }
+    /**
+     * roomId
+     * 메세지 조회 차단 시간 **/
+
+    public List<ChatMessageDto> findChatMessageByRoomIdWithBlock(Long roomId, LocalDateTime exitDate,LocalDateTime blockDate){
+        Set<String> keys = redisTemplate.keys(roomId.toString()+"_"+"*");
+
+        List<ChatMessageDto>chatMessageDtos=new ArrayList<>();
+        for(String key:keys) {
+
+            ChatMessageDto chatMessageDto = objectMapper.convertValue(redisTemplate.opsForValue().get(key), ChatMessageDto.class);
+            if (exitDate == null) {
+                chatMessageDtos.add(chatMessageDto);
+            }
+            else{
+                if(chatMessageDto.getRegDate().isAfter(exitDate)&&chatMessageDto.getRegDate().isBefore(blockDate)){
+                    chatMessageDtos.add(chatMessageDto);
+                }
+            }
+        }
+
+        Collections.sort(chatMessageDtos, Comparator.comparing(ChatMessageDto::getRegDate));
+//               (c1,c2)-> {
+//
+//          return c2.getRegDate().compareTo(c1.getRegDate());
+//       });
+
+        return chatMessageDtos.stream()
+//                .limit(20)
+                .collect(Collectors.toList());
+
+    }
 
 
 
@@ -107,7 +141,7 @@ public class ChatMessageRepository {
     }
 
     public void moveChatRoom(Long userId,Long roomId,String email)throws Exception{
-        if(redisTemplate.opsForValue().get("session::"+"_"+email)==null){
+        if(redisTemplate.opsForValue().get("session::"+email)==null){
             throw new Exception();
         }
         redisTemplate.opsForValue().set("session::"+email,roomId);
@@ -123,8 +157,7 @@ public class ChatMessageRepository {
 
     }
     public Long getRoomSession(String email){
-        return (Long)redisTemplate.opsForValue().get("session::"+email);
-
+       return objectMapper.convertValue(redisTemplate.opsForValue().get("session::"+email),Long.class);
     }
 
     public void createRoomSession(String email){
@@ -132,6 +165,7 @@ public class ChatMessageRepository {
         redisTemplate.opsForValue().set("session::"+email,-1L);
     }
     public void deleteRoomSession(String email){
+        System.out.println("session::" + email);
         redisTemplate.delete("session::"+email);
     }
 

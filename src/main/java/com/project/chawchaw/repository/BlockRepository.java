@@ -27,6 +27,6 @@ public interface BlockRepository extends JpaRepository<Block, Long> {
     Optional<Block>isBlockWithUserId(@Param("userId1")Long userId1,@Param("userId2")Long userId2);
 
     @Query("select b from Block b join fetch"+
-            " b.fromUser fu where fu.id=:fromUserId and fu.id=:fromUserId")
+            " b.fromUser fu where fu.id=:fromUserId")
     List<Block> findBlockByFromUserId(@Param("fromUserId")Long fromUserId);
 }

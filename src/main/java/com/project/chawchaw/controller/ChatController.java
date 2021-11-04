@@ -25,7 +25,6 @@ import java.time.LocalDateTime;
 
 @RequiredArgsConstructor
 @Controller
-
 public class ChatController {
 
     private final ChatMessageRepository chatRoomRepository;
@@ -45,18 +44,29 @@ public class ChatController {
     @MessageMapping("/message")
     public void message(@RequestBody @Valid ChatMessageDto message) {
 
+
         if (message.getRegDate()==null) {
             message.setRegDate(LocalDateTime.now().withNano(0));
         }
-//        if (message.getMessageType().equals(MessageType.ENTER)) {
-//            message.setMessage(message.getSender() + "님이 입장하셨습니다.");
-//        }
 
-//        System.out.println(message.getRegDate());
         chatService.enterChatRoom(message.getRoomId());
 
         // Websocket에 발행된 메시지를 redis로 발행한다(publish)
         chatService.publish(chatService.getTopic(message.getRoomId()), message);
+    }
+    @MessageMapping("/message/test")
+    public void messageTest(@RequestBody @Valid ChatMessageDto message) {
+
+        System.out.println("메시지 들어옴");
+
+        if (message.getRegDate()==null) {
+            message.setRegDate(LocalDateTime.now().withNano(0));
+        }
+
+        chatService.enterChatRoom(message.getRoomId());
+
+        // Websocket에 발행된 메시지를 redis로 발행한다(publish)
+        chatService.publishTest(chatService.getTopic(message.getRoomId()), message);
     }
 
     // 모든 채팅방 목록 반환

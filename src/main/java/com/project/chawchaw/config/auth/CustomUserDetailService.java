@@ -26,8 +26,7 @@ public class CustomUserDetailService implements UserDetailsService{
         public UserDetails loadUserByUsername(String userPk) {
 
                 User user = userRepository.findById(Long.valueOf(userPk)).orElseThrow(UserNotFoundException::new);
-                System.out.println(user.getRole().toString());
-        return new CustomUserDetails(
+                return new CustomUserDetails(
                 Long.valueOf(userPk),
                 user.getEmail(),
                 user.getPassword(),

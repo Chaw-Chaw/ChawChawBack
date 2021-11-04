@@ -1,6 +1,8 @@
 package com.project.chawchaw.service.chat;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.gson.Gson;
+import com.google.gson.JsonObject;
 import com.project.chawchaw.ChawchawApplication;
 import com.project.chawchaw.config.jwt.JwtTokenProvider;
 import com.project.chawchaw.config.socket.WebSocketConfig;
@@ -20,10 +22,13 @@ import com.project.chawchaw.repository.chat.ChatMessageRepository;
 import com.project.chawchaw.repository.chat.ChatRoomRepository;
 import com.project.chawchaw.repository.chat.ChatRoomUserRepository;
 import com.project.chawchaw.repository.user.UserRepository;
+import com.project.chawchaw.service.BlockService;
 import com.project.chawchaw.service.SignService;
 import com.project.chawchaw.service.UserService;
 import io.lettuce.core.dynamic.domain.Timeout;
 import org.assertj.core.api.Assertions;
+import org.json.simple.JSONObject;
+import org.json.simple.parser.JSONParser;
 import org.junit.Before;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -60,6 +65,7 @@ import javax.persistence.EntityManager;
 import java.io.UncheckedIOException;
 import java.lang.reflect.Type;
 import java.net.SocketTimeoutException;
+import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.concurrent.*;
@@ -72,9 +78,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @Transactional
-
 //@SpringBootTest(classes =ChawchawApplication.class)
-
 class ChatServiceTest {
 
 
@@ -106,10 +110,16 @@ class ChatServiceTest {
     SignService signService;
 
     @Autowired
-     SimpMessageSendingOperations messagingTemplate;
+    SimpMessageSendingOperations messagingTemplate;
 
     @Autowired
     JwtTokenProvider jwtTokenProvider;
+
+    @Autowired
+    ObjectMapper mapper;
+
+    @Autowired
+    BlockService blockService;
 
     //    @LocalServerPort Integer port;
     @LocalServerPort Integer port;
@@ -117,7 +127,20 @@ class ChatServiceTest {
     WebSocketStompClient stompClient;
     static final String WEBSOCKET_TOPIC = "/queue/chat/";
 
-    @BeforeEach
+
+//    @Test
+//    @Rollback(value = false)
+//    public void dd()throws Exception{
+//       //given
+//
+//       //when
+//
+//       //then
+//    }
+
+
+
+//    @BeforeEach
     public void beforeEach()throws Exception{
 
         Language language1=Language.createLanguage("한국어","ko");
@@ -175,6 +198,10 @@ class ChatServiceTest {
         userService.userProfileUpdate(userUpdateDto,user1.getId());
         userService.userProfileUpdate(userUpdateDto,user2.getId());
 
+        ChatRoomDto room = chatService.createRoom(user1.getId(), user2.getId());
+
+        blockService.createBlock(user2.getId(),user1.getId());
+
         em.flush();
         /**
          * stomp 설정
@@ -211,93 +238,6 @@ class ChatServiceTest {
         assertThat(chatRoomUserRepository.findByChatRoomUserByUserId(user2.getId()).get(0).getChatRoom().getId()).isEqualTo(room.getRoomId());
     }
 
-
-
-    /**
-     * 채팅메세지 발송시 소켓통신 으로 수신되는지
-     * user1->user2**/
-    @Test
-    public void sendChatMessage()throws Exception{
-        blockingQueue = new LinkedBlockingDeque<>();
-        stompClient = new WebSocketStompClient(new SockJsClient(
-                Arrays.asList(new WebSocketTransport(new StandardWebSocketClient()))));
-
-       //given
-        UserLoginResponseDto basic = signService.login(new UserLoginRequestDto("fpdlwjzlr@naver.com","11", null, null, null, null));
-
-        UserLoginResponseDto basic2 = signService.login(new UserLoginRequestDto("fpdlwjzlr@naver.comM","22", null, null, null, null));
-
-        ChatRoomDto room = chatService.createRoom(basic.getProfile().getId(), basic2.getProfile().getId());
-        em.flush();
-
-       //when
-
-//
-//        stompClient.setMessageConverter(new MappingJackson2MessageConverter());
-
-//        CountDownLatch latch = new CountDownLatch(1);
-        StompHeaders headers = new StompHeaders();
-        headers.add("Authorization", "Bearer "+basic.getToken().getAccessToken());
-        StompSession session = stompClient
-                    .connect(getWsPath(), new WebSocketHttpHeaders(),headers,new StompSessionHandlerAdapter() {})
-                    .get(10, SECONDS);
-
-
-        session.subscribe(WEBSOCKET_TOPIC + basic2.getProfile().getId(), new DefaultStompFrameHandler());
-        ChatMessageDto chatMessageDto=new ChatMessageDto(MessageType.TALK, room.getRoomId(), basic.getProfile().getId(),basic.getProfile().getName(),"message",null, LocalDateTime.now().withNano(0),false);
-
-
-        messagingTemplate.convertAndSend(WEBSOCKET_TOPIC+basic2.getProfile().getId(),chatMessageDto);
-//        chatService.enterChatRoom(room.getRoomId());
-//        chatService.publish(chatService.getTopic(room.getRoomId()),chatMessageDto);
-
-//        Assertions.assertThatThrownBy(() -> {
-//            stompClient
-//                    .connect(getWsPath(), new WebSocketHttpHeaders() , new StompSessionHandlerAdapter(){})
-//                    .get(10, SECONDS);
-//        }).isInstanceOf(TimeoutException.class);
-
-
-        // then
-        String jsonResult = blockingQueue.poll(10, SECONDS);
-        Map<String, String> result = gson.fromJson(jsonResult, new HashMap().getClass());
-        assertThat(result.get("message")).isEqualTo(chatMessageDto.getMessage());
-
-    }
-    private String getWsPath() {
-        return String.format("ws://localhost:%d/ws", port);
-//        return "ws://localhost:8080/ws";
-    }
-
-    class DefaultStompFrameHandler implements StompFrameHandler {
-        @Override
-        public Type getPayloadType(StompHeaders stompHeaders) {
-            return byte[].class;
-        }
-
-        @Override
-        public void handleFrame(StompHeaders stompHeaders, Object o) {
-            blockingQueue.offer(new String((byte[]) o));
-        }
-    }
-
-//    public class MySessionHandler extends StompSessionHandlerAdapter {
-//        private final CountDownLatch latch;
-//
-//        public MySessionHandler(final CountDownLatch latch) {
-//            this.latch = latch;
-//        }
-//
-//        @Override
-//        public void afterConnected(StompSession session,
-//                                   StompHeaders connectedHeaders) {
-//            try {
-//                // do here some job
-//            } finally {
-//                latch.countDown();
-//            }
-//        }
-//    }
 
 
 

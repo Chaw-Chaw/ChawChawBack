@@ -39,8 +39,6 @@ public class JwtAuthenticationFilter extends GenericFilterBean {
 
         if(token != null && jwtTokenProvider.validateTokenWithRequest(token,request)) {
 
-
-//
 //            ReadableRequestWrapper wrapper = new ReadableRequestWrapper((HttpServletRequest)request);
 //            filterChain.doFilter(wrapper, response);
             System.out.println("===============================zzzzz");

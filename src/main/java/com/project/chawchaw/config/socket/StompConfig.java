@@ -33,51 +33,39 @@ public class StompConfig implements ChannelInterceptor {
     private final UserRepository userRepository;
     private final ChatMessageRepository chatMessageRepository;
 
-
-
-
     @Override
     public Message<?> preSend(Message<?> message, MessageChannel channel) {
-        StompHeaderAccessor accessor = StompHeaderAccessor.wrap(message);
+//        StompHeaderAccessor accessor = StompHeaderAccessor.wrap(message);
 
+        StompHeaderAccessor accessor = MessageHeaderAccessor.getAccessor(message, StompHeaderAccessor.class);
 //        StompHeaderAccessor accessor = MessageHeaderAccessor.getAccessor(message, StompHeaderAccessor.class);
         if (StompCommand.CONNECT == accessor.getCommand()) {
-            System.out.println("connect success");
             String token = accessor.getFirstNativeHeader("Authorization");
 
             if (hasText(token) && token.startsWith("Bearer")) {
                 token=token.replace("Bearer ","");
             }
             else{
-
                 return null;
             }
 
             Long userId = Long.valueOf(jwtTokenProvider.getUserPk(token));
 
-//            User user = userRepository.findById(userId).orElseThrow(UserNotFoundException::new);
+            User user = userRepository.findById(userId).orElseThrow(UserNotFoundException::new);
 
+            if(!user.getRole().equals(ROLE.USER)) return null;
 
-//            if(!user.getRole().equals(ROLE.USER)) return null;
+            accessor.setUser(jwtTokenProvider.getAuthentication(token));
 
-//            accessor.setUser(jwtTokenProvider.getAuthentication(token));
-
-
-//            chatMessageRepository.createRoomSession(user.getEmail());
-
-
+            chatMessageRepository.createRoomSession(user.getEmail());
 
         }
-//
-//        else if(StompCommand.DISCONNECT == accessor.getCommand()){
-//            if (accessor.getUser()!=null){
-//                chatMessageRepository.deleteRoomSession(accessor.getUser().getName());
-//            }
-//        }
+        else if(StompCommand.DISCONNECT == accessor.getCommand()){
+            if (accessor.getUser()!=null){
+                chatMessageRepository.deleteRoomSession(accessor.getUser().getName());
+            }
+        }
         return message;
     }
-
-
-
 
 }

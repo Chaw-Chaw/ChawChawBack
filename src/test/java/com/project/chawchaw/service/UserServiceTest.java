@@ -410,28 +410,31 @@ class UserServiceTest {
         adminUserSearch1.setCountry("미국");
         adminUserSearch1.setOrder("name");
         adminUserSearch1.setSort("desc");
-        PageRequest pageRequest1 = PageRequest.of(0, 3);
-        Page<UsersByAdminDto> usersByAdminDtos1 = userService.usersByAdmin(adminUserSearch1, pageRequest1);
+        adminUserSearch1.setPageNo(0);
+
+        Page<UsersByAdminDto> usersByAdminDtos1 = userService.usersByAdmin(adminUserSearch1);
 
         likeService.like(user2.getId(),user1.getId());
         AdminUserSearch adminUserSearch2=new AdminUserSearch();
         adminUserSearch2.setCountry("미국");
         adminUserSearch2.setOrder("like");
         adminUserSearch2.setSort("desc");
-        Page<UsersByAdminDto> usersByAdminDtos2 = userService.usersByAdmin(adminUserSearch2, pageRequest1);
+        adminUserSearch2.setPageNo(0);
+        Page<UsersByAdminDto> usersByAdminDtos2 = userService.usersByAdmin(adminUserSearch2);
 
         userService.detailUser(user2.getId(),user1.getId());
         AdminUserSearch adminUserSearch3=new AdminUserSearch();
         adminUserSearch3.setCountry("미국");
         adminUserSearch3.setOrder("view");
         adminUserSearch3.setSort("desc");
-        Page<UsersByAdminDto> usersByAdminDtos3 = userService.usersByAdmin(adminUserSearch3, pageRequest1);
+        adminUserSearch3.setPageNo(0);
+        Page<UsersByAdminDto> usersByAdminDtos3 = userService.usersByAdmin(adminUserSearch3);
 
 
 
         //then
 
-        assertThat(usersByAdminDtos1.getContent().size()).isEqualTo(3);
+        assertThat(usersByAdminDtos1.getContent().size()).isEqualTo(7);
         assertThat(usersByAdminDtos1.getContent().get(0).getId()).isEqualTo(user7.getId());
         assertThat(usersByAdminDtos1.getContent().get(1).getId()).isEqualTo(user6.getId());
         assertThat(usersByAdminDtos1.getContent().get(2).getId()).isEqualTo(user5.getId());
