@@ -3,6 +3,7 @@ package com.project.chawchaw.service;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.gson.Gson;
 import com.project.chawchaw.config.jwt.JwtTokenProvider;
+import com.project.chawchaw.dto.chat.ChatDto;
 import com.project.chawchaw.dto.chat.ChatMessageDto;
 import com.project.chawchaw.dto.chat.ChatRoomDto;
 import com.project.chawchaw.dto.chat.MessageType;
@@ -227,7 +228,7 @@ public class StompTest {
 
 //        CountDownLatch latch = new CountDownLatch(1);
         StompHeaders headers = new StompHeaders();
-        headers.add("Authorization", "Bearer " + basic.getToken().getAccessToken());
+        headers.add("Authorization", "Bearer " +basic.getToken().getAccessToken());
         StompSession session = stompClient
                 .connect(getWsPath(), new WebSocketHttpHeaders(), headers, new StompSessionHandlerAdapter() {
                 })
@@ -369,10 +370,63 @@ public class StompTest {
 
         assertThat(jsonResult).isNull();
     }
-
-
     /**
-     * disConnect test 해야함**/
+     * user1 ,user2 채팅
+     * user1 퇴장
+     * **/
+
+    @Test
+    public void deleteChatRoomTest()throws Exception{
+
+        blockingQueue = new LinkedBlockingDeque<>();
+        stompClient = new WebSocketStompClient(new SockJsClient(
+                Arrays.asList(new WebSocketTransport(new StandardWebSocketClient()))));
+
+        //given
+        UserLoginResponseDto basic1 = signService.login(new UserLoginRequestDto("fpdlwjzlr@naver.com", "11", null, null, null, null));
+
+        UserLoginResponseDto basic2 = signService.login(new UserLoginRequestDto("fpdlwjzlr@naver.comm", "22", null, null, null, null));
+
+        //when  소켓 연결
+        StompHeaders headers1 = new StompHeaders();
+        StompHeaders headers2 = new StompHeaders();
+        headers1.add("Authorization", "Bearer " + basic1.getToken().getAccessToken());
+        headers2.add("Authorization", "Bearer " + basic2.getToken().getAccessToken());
+        StompSession session = stompClient
+                .connect(getWsPath(), new WebSocketHttpHeaders(), headers1, new StompSessionHandlerAdapter() {
+                })
+                .get(5, SECONDS);
+        StompSession session1 = stompClient
+                .connect(getWsPath(), new WebSocketHttpHeaders(), headers2, new StompSessionHandlerAdapter() {
+                })
+                .get(5, SECONDS);
+
+        session.subscribe(WEBSOCKET_TOPIC + basic2.getProfile().getId(), new DefaultStompFrameHandler());
+        ChatMessageDto chatMessageDto1 = new ChatMessageDto(MessageType.TALK, 1L, basic1.getProfile().getId(), basic1.getProfile().getName(), "message1", null, LocalDateTime.now(), false);
+
+        session.send("/message/test", mapper.writeValueAsString(chatMessageDto1).getBytes(StandardCharsets.UTF_8));
+
+        Long roomId = chatRoomUserRepository.findByChatRoomUserByUserId(basic1.getProfile().getId()).get(0).getChatRoom().getId();
+
+        Thread.sleep(1000);
+        //user1 채팅방 나감
+        chatService.deleteChatRoom(roomId,basic1.getProfile().getId());
+        Thread.sleep(500);
+
+        ChatMessageDto chatMessageDto2 = new ChatMessageDto(MessageType.TALK, 1L, basic1.getProfile().getId(), basic1.getProfile().getName(), "message2", null, LocalDateTime.now(), false);
+
+        //채팅 나간후 메세지 보냄
+        session.send("/message/test", mapper.writeValueAsString(chatMessageDto2).getBytes(StandardCharsets.UTF_8));
+
+        List<ChatDto> chat = chatService.getChat(basic1.getProfile().getId());
+
+        //then
+        assertThat(chat.get(0).getRoomId()).isEqualTo(roomId);
+        assertThat(chat.get(0).getMessages().get(0).getMessage()).isEqualTo("message2");
+        assertThat(chat.get(0).getMessages().size()).isEqualTo(1);
+        assertThat(chat.get(0).getParticipantIds().size()).isEqualTo(2);
+
+    }
 
 
 

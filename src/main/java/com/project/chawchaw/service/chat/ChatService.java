@@ -293,29 +293,41 @@ public class ChatService {
 
     /**
      채팅방 삭제
+     메세지 생성 시간과 퇴장 시간 비교
+
      채팅방 회원남았을시 false
-     채팅방 회원 모두 나갔을시 true**/
+     채팅방 회원 모두 나갔을시 true
+
+
+     채팅없이 바로 퇴장한 경우 처리  or 메세지 유효기간 다되서 없을때 처리  **/
+
     @Transactional
     public Boolean deleteChatRoom(Long roomId,Long userId) {
-//        User user = userRepository.findById(userId).orElseThrow(UserNotFoundException::new);
         List<ChatRoomUser> findChatRoomUser = chatRoomUserRepository.findByRoomId(roomId);
         List<ChatMessageDto> chatMessageByRoomId = chatMessageRepository.findChatMessageByRoomId(roomId, null);
-        LocalDateTime regDate = chatMessageByRoomId.get(chatMessageByRoomId.size() - 1).getRegDate();
+        LocalDateTime regDate=null;
+        //채팅 메세지가 있을 때만 처리
+        if(!chatMessageByRoomId.isEmpty())
+            regDate = chatMessageByRoomId.get(chatMessageByRoomId.size() - 1).getRegDate();
 
-        int check = 0;
+        //상대방 user
+        ChatRoomUser chatRoomUser1=null;
+
         for (ChatRoomUser chatRoomUser : findChatRoomUser) {
             if (!chatRoomUser.getUser().getId().equals(userId)) {
-                if (chatRoomUser.getExitDate().isBefore(regDate)) {
-                    check = 1;
-                }
+                chatRoomUser1=chatRoomUser;
+
             } else {
                 chatRoomUser.changeIsExit(true);
                 chatRoomUser.changeExitDate();
             }
-
         }
 
-        if (check == 0) {
+//        if(regDate==null){
+//            if()
+//        }
+
+        if (chatRoomUser1.getExitDate()!=null&&chatRoomUser1.getExitDate().isBefore(regDate)) {
             chatRoomRepository.delete(findChatRoomUser.get(0).getChatRoom());
             chatMessageRepository.deleteByRoomId(roomId);
             return true;
