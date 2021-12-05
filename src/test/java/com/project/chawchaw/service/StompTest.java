@@ -222,7 +222,6 @@ public class StompTest {
 
 
         //when
-
 //
 //        stompClient.setMessageConverter(new MappingJackson2MessageConverter());
 
