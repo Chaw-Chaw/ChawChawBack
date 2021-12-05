@@ -431,8 +431,10 @@ public class StompTest {
 
 
 
+
     private String getWsPath() {
         return String.format("ws://localhost:%d/ws", port);
+
 //        return "ws://localhost:8080/ws";
     }
 
